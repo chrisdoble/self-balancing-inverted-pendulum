@@ -1,0 +1,87 @@
+\documentclass{article}
+\usepackage{amsmath} % For align*
+\usepackage{tikz} % For diagrams
+
+\begin{document}
+
+\tableofcontents
+
+\section{Equations of Motion}
+
+\begin{figure}[h]
+  \centering
+  \begin{tikzpicture}
+    % x
+    \draw (-2, 0.3) -- (-2, 0.7);
+    \draw[dashed] (-2, 0.5) -- node[above] {$x$} (0, 0.5);
+
+    % Cart
+    \draw (0, 0) rectangle node {M} (2, 1);
+
+    % Pendulum
+    \draw (1, 1) -- (0.5, 3);
+    \draw[dashed] (1, 1) -- (1, 3);
+    \draw (0.39, 3.3) node {m} circle (0.3cm);
+
+    % l
+    \node at (0.5, 1.8) {$l$};
+
+    % Theta
+    \draw (1, 2.8) arc (90:117:1);
+    \node at (0.8, 2.5) {$\theta$};
+
+    % F
+    \draw[->,thick] (2, 0.5) -- (3, 0.5) node[right] {$F$};
+
+    % Axes
+    \draw[->] (4, 0) -- (5, 0) node[right] {$x$};
+    \draw[->] (4, 0) -- (4, 1) node[above] {$y$};
+  \end{tikzpicture}
+\end{figure}
+
+\begin{itemize}
+  \item A cart of mass $M$ is constrained to move along the $x$ axis with its distance from an arbitrary point on the $x$ axis denoted $x$. A driving force of magnitude $F$ is applied to the cart in the $x$ direction. A simple pendulum consisting of a mass $m$ and a massless rod of length $l$ is connected to the cart with its angle from the positive $y$ axis denoted $\theta$.
+
+  \item The kinetic energy of the cart is \[T_\text{cart} = \frac{1}{2} M \dot{x}^2.\]
+
+  \item The $x$ and $y$ coordinates of the pendulum are \begin{align*}
+          X & = x - l \sin \theta \\
+          Y & = l \cos \theta,
+        \end{align*} thus its $x$ and $y$ velocities are \begin{align*}
+          \dot{X} & = \dot{x} - l \dot{\theta} \cos \theta \\
+          \dot{Y} & = -l \dot{\theta} \sin \theta
+        \end{align*} and its kinetic energy is \begin{align*}
+          T_\text{pendulum} & = \frac{1}{2} m v^2                                                                          \\
+                            & = \frac{1}{2} (\dot{X}^2 + \dot{Y}^2)                                                        \\
+                            & = \frac{1}{2} m [(\dot{x} - l \dot{\theta} \cos \theta)^2 + (-l \dot{\theta} \sin \theta)^2] \\
+                            & = \frac{1}{2} m (\dot{x}^2 - 2 l \dot{x} \dot{\theta} \cos \theta + l^2 \dot{\theta}^2).
+        \end{align*}
+
+  \item The total kinetic energy of the system is \begin{align*}
+          T & = T_\text{cart} + T_\text{pendulum}                                                                          \\
+            & = \frac{1}{2} (m + M) \dot{x}^2 + \frac{1}{2} m (l^2 \dot{\theta}^2 - 2 l \dot{x} \dot{\theta} \cos \theta).
+        \end{align*}
+
+  \item The potential energy of the system is equal to the gravitational potential energy of the pendulum. If its potential energy is $0$ when $\theta = \frac{\pi}{2}$ then \[U = m g l \cos \theta.\]
+
+  \item The Lagrangian of the system is \begin{align*}
+          \mathcal{L} & = T - U                                                                                                                          \\
+                      & = \frac{1}{2} (m + M) \dot{x}^2 + \frac{1}{2} m (l^2 \dot{\theta}^2 - 2 l \dot{x} \dot{\theta} \cos \theta) - m g l \cos \theta.
+        \end{align*}
+
+  \item By d'Alembert's principle the generalized forces associated with the $\theta$ and $x$ coordinates are $0$ and $F$, respectively.
+
+  \item The Euler-Lagrange equation for the $\theta$ coordinate is \begin{align*}
+          \frac{d}{d t} \frac{\partial \mathcal{L}}{\partial \dot{\theta}} - \frac{\partial \mathcal{L}}{\partial \theta}         & = 0  \\
+          \frac{d}{d t} (m l^2 \dot{\theta} - m l \dot{x} \cos \theta) - m l \dot{x} \dot{\theta} \sin \theta - m g l \sin \theta & = 0  \\
+          l \ddot{\theta} - \ddot{x} \cos \theta - g \sin \theta                                                                  & = 0.
+        \end{align*} As the goal is to keep $\theta$ close to $0$ this can be linearized by using the approximations $\cos \theta \approx 1$ and $\sin \theta \approx \theta$ giving \[l \ddot{\theta} - \ddot{x} - g \theta = 0.\]
+
+  \item The Euler-Lagrange equation for the $x$ coordinate is \begin{align*}
+          \frac{d}{d t} \frac{\partial \mathcal{L}}{\partial \dot{x}} - \frac{\partial \mathcal{L}}{\partial x} & = F  \\
+          \frac{d}{d t} [(m + M) \dot{x} - m l \dot{\theta} \cos \theta]                                        & = F  \\
+          (m + M) \ddot{x} - m l \ddot{\theta} \cos \theta + m l \dot{\theta}^2 \sin \theta                     & = F.
+        \end{align*} Using the same approximations as above gives \[(m + M) \ddot{x} - m l \ddot{\theta} + m l \dot{\theta}^2 \theta = F.\]
+\end{itemize}
+
+\end{document}
