@@ -90,4 +90,32 @@ This document contains my notes on \href{https://www.youtube.com/playlist?list=P
         \end{align*}
 \end{itemize}
 
+\subsection{Stability and Eigenvalues}
+
+\begin{itemize}
+  \item A system $\dvec{x} = \vec{A} \vec{x}$ is stable if and only if all of the eigenvalues of $\vec{A}$ have negative real parts. This is because the solution is of the form\footnote{See \href{https://www.youtube.com/watch?v=nyqJJdhReiA\#t=15m15s}{here} for a proof of why $e^{\vec{A} t} = \vec{T} e^{\vec{D} t} \vec{T}^{-1}$.} \[\vec{x} = \vec{T} e^{\vec{D} t} \vec{T}^{-1} \vec{x}_0\] where \[e^{\vec{D} t} = \begin{pmatrix}
+            e^{\lambda_1 t} &        & 0               \\
+                            & \ddots &                 \\
+            0               &        & e^{\lambda_n t}
+          \end{pmatrix}\] and \[e^{\lambda_1 t} = e^{(a + i b) t} = e^{a t} e^{i b t}\] which is only stable if $a < 0$.
+
+  \item Sometimes you can make a system stable (i.e. make all the eigenvalues have negative real parts) via the control term $\vec{B} \vec{u}$.
+
+  \item In a real-world system, control signals will be sent and observations received in discrete steps rather than continuously. A variation of the equation that captures this is \[\vec{x}_{k + 1} = \tilde{\vec{A}} \vec{x}_k\] where \[\tilde{\vec{A}} = e^{\vec{A} \Delta t}.\] In other words, \begin{align*}
+          \vec{x}_k & = \tilde{\vec{A}}^k \vec{x}_0                                        \\
+                    & = (\tilde{\vec{T}} \tilde{\vec{D}} \tilde{\vec{T}}^{-1})^k \vec{x_0} \\
+                    & = \tilde{\vec{T}} \tilde{\vec{D}}^k \tilde{\vec{T}}^{-1} \vec{x}_0
+        \end{align*} where \[\tilde{\vec{D}}^k = \begin{pmatrix}
+            \tilde{\lambda}_1^k &        & 0                   \\
+                                & \ddots &                     \\
+            0                   &        & \tilde{\lambda}_n^k
+          \end{pmatrix}\] so the discrete system is stable if the moduli of all the eigenvalues of $\tilde{\vec{A}}$ are less than or equal to $1$.
+
+  \item Note that the stability criteria of a discrete system (the moduli of of all eigenvalues must be less than $1$) differs from that of a continuous system (the real parts of all eigenvalues must be negative) because we're raising $\tilde{\vec{A}} = e^{\vec{A} \Delta t}$ to a power directly rather than exponentiating it so both the real and imaginary components of its eigenvalues contribute to the ``radius'' \begin{align*}
+          \lambda_n^k & = (a + i b)^k                                     \\
+                      & = (\sqrt{a^2 + b^2} e^{i \arctan \frac{b}{a}})^k  \\
+                      & = \sqrt{a^2 + b^2}^k e^{i k \arctan \frac{b}{a}}.
+        \end{align*}
+\end{itemize}
+
 \end{document}
