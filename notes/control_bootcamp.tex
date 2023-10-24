@@ -36,16 +36,58 @@ This document contains my notes on \href{https://www.youtube.com/playlist?list=P
           \item They can be more energy efficient than open-loop controllers, i.e. they don't have the downside mentioned above.
         \end{itemize}
 
-  \item The mathematical model used in this course is a state-space based system of linear differential equations \[\dvec{X} = \vec{A} \vec{X}\] where $\vec{X}$ is the \textbf{state vector} — a vector containing all the system's values of interest — and $\dvec{X}$ are their rates of change at a time $t$.
+  \item The mathematical model used in this course is a state-space based system of linear differential equations \[\dvec{x} = \vec{A} \vec{x}\] where $\vec{x}$ is the \textbf{state vector} — a vector containing all the system's values of interest — and $\dvec{x}$ are their rates of change at a time $t$.
 
-  \item The solution to the above equation is \[\vec{X}(t) = e^{\vec{A} t} \vec{X}(0)\] and the eigenvalues of $\vec{A}$ can be used to determine the stability of the system, e.g. if they all have negative real components the system is stable.
+  \item The solution to the above equation is \[\vec{x}(t) = e^{\vec{A} t} \vec{x}(0)\] and the eigenvalues of $\vec{A}$ can be used to determine the stability of the system, e.g. if they all have negative real components the system is stable.
 
-  \item Control is introduced to the system by modifying the equation to \[\dvec{X} = \vec{A} \vec{X} + \vec{B} \vec{U}\] where $\vec{B}$ is a coefficient matrix and $\vec{U}$ is the input to the system.
+  \item Control is introduced to the system by modifying the equation to \[\dvec{x} = \vec{A} \vec{x} + \vec{B} \vec{u}\] where $\vec{B}$ is a coefficient matrix and $\vec{u}$ is the input to the system.
 
-  \item If we make the input to the system \[\vec{U} = -\vec{K} \vec{X}\] then \begin{align*}
-          \dvec{X} & = \vec{A} \vec{X} - \vec{B} \vec{K} \vec{X} \\
-                   & = (\vec{A} - \vec{B} \vec{K}) \vec{X}
+  \item If we make the input to the system \[\vec{u} = -\vec{K} \vec{x}\] then \begin{align*}
+          \dvec{x} & = \vec{A} \vec{x} - \vec{B} \vec{K} \vec{x} \\
+                   & = (\vec{A} - \vec{B} \vec{K}) \vec{x}
         \end{align*} and now it is the eigenvalues of $\vec{A} - \vec{B} \vec{K}$ that determine the stability of the system, i.e. we can make an unstable system stable by appropriate choice of inputs.
+\end{itemize}
+
+\section{Linear Systems}
+
+\begin{itemize}
+  \item The solution to the linear system of differential equations \[\dvec{x} = \vec{A} \vec{x}\] is \[\vec{x}(t) = e^{\vec{A} t} \vec{x}_0\] where \begin{align*}
+          e^{\vec{A} t} & = \sum_{k = 0}^\infty \frac{(\vec{A} t)^k}{k!}                                       \\
+                        & = \vec{I} + \vec{A} t + \frac{\vec{A}^2 t^2}{2!} + \frac{\vec{A}^3 t^3}{3!} + \ldots
+        \end{align*}
+
+  \item If a matrix $\vec{A}$ has eigenvalues $\lambda_1, \ldots, \lambda_n$ and eigenvectors $\vec{k}_1, \ldots, \vec{k}_n$ then \[\vec{A} \vec{T} = \vec{T} \vec{D}\] or \[\vec{T}^{-1} \vec{A} \vec{T} = \vec{D}\] where \[\vec{T} = \begin{pmatrix}
+            \vec{k}_1 & \cdots & \vec{k}_n
+          \end{pmatrix}\] and \[\vec{D} = \begin{pmatrix}
+            \lambda_1 &        & 0         \\
+                      & \ddots &           \\
+            0         &        & \lambda_n
+          \end{pmatrix}.\]
+
+  \item Using the above gives \[e^{\vec{A} t} = \vec{T} e^{\vec{D} t} \vec{T}^{-1}\] which is simpler because $e^{\vec{D} t}$ is easy to calculate.
+
+  \item If we define $\vec{z}$ to be $\vec{x}$ transformed to the eigenvector basis, i.e. \[\vec{x} = \vec{T} \vec{z}\] and \[\dvec{x} = \vec{T} \dvec{z}\] then \begin{align*}
+          \vec{z}  & = \vec{T}^{-1} \vec{x}                 \\
+          \dvec{z} & = \vec{T}^{-1} \dvec{x}                \\
+                   & = \vec{T}^{-1} \vec{A} \vec{x}         \\
+                   & = \vec{T}^{-1} \vec{A} \vec{T} \vec{z} \\
+                   & = \vec{D} \vec{z}
+        \end{align*} where $\vec{D}$ is the diagonal matrix consisting of the eigenvalues of $\vec{A}$. The solution to this equation is \[\vec{z}(t) = e^{\vec{D} t} \vec{z}_0\] where \[e^{\vec{D} t} = \begin{pmatrix}
+            e^{\lambda_1 t} &        & 0               \\
+                            & \ddots &                 \\
+            0               &        & e^{\lambda_n t}
+          \end{pmatrix},\] i.e. the equations are uncoupled such that \begin{align*}
+          z_1(t) & = z_{0,1} e^{\lambda_1 t}  \\
+          \vdots                              \\
+          z_n(t) & = z_{0,n} e^{\lambda_n t}.
+        \end{align*}
+
+  \item The equivalence between the original and eigenvector coordinates can be seen by manipulating the solution \begin{align*}
+          \vec{x}(t) & = e^{\vec{A} t} \vec{x}_0                      \\
+                     & = \vec{T} e^{\vec{D} t} \vec{T}^{-1} \vec{x}_0 \\
+                     & = \vec{T} e^{\vec{D} t} \vec{z}_0              \\
+                     & = \vec{T} \vec{z}(t).
+        \end{align*}
 \end{itemize}
 
 \end{document}
