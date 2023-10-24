@@ -1,0 +1,51 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\renewcommand{\vec}[1]{\boldsymbol{\mathbf{#1}}}
+\newcommand{\dvec}[1]{\dot{\vec{#1}}}
+
+\begin{document}
+
+This document contains my notes on \href{https://www.youtube.com/playlist?list=PLMrJAkhIeNNR20Mz-VpzgfQs5zrYi085m}{Steve Brunton's Control Bootcamp video series}. Each section corresponds to the video of the same title.
+
+\tableofcontents
+
+\section{Overview}
+
+\begin{itemize}
+  \item \textbf{Passive controls} attempt to control a system passively, i.e. they are built into the system and don't vary based on observations of the system.
+
+  \item \textbf{Active controls} attempt to control a system actively, i.e. they change their behaviour based on observations of the system.
+
+  \item \textbf{Open-loop controllers} don't observe the output of the system — their inputs are predetermined. One downside of this approach is that you may unnecessarily input energy into the system when it already has the desired output.
+
+  \item \textbf{Closed-loop controllers} observe the output of the system to determine their inputs. They have several benefits over open-loop controllers:
+
+        \begin{itemize}
+          \item They handle uncertainty in the system, e.g. if you don't always know how the system will respond, or if your model isn't completely accurate.
+
+          \item They handle disturbances in the system, e.g. if someone pushes a self-balancing inverted pendulum. It may not be possible to account for these in the model.
+
+          \item They can be more energy efficient than open-loop controllers, i.e. they don't have the downside mentioned above.
+        \end{itemize}
+
+  \item The mathematical model used in this course is a state-space based system of linear differential equations \[\dvec{X} = \vec{A} \vec{X}\] where $\vec{X}$ is the \textbf{state vector} — a vector containing all the system's values of interest — and $\dvec{X}$ are their rates of change at a time $t$.
+
+  \item The solution to the above equation is \[\vec{X}(t) = e^{\vec{A} t} \vec{X}(0)\] and the eigenvalues of $\vec{A}$ can be used to determine the stability of the system, e.g. if they all have negative real components the system is stable.
+
+  \item Control is introduced to the system by modifying the equation to \[\dvec{X} = \vec{A} \vec{X} + \vec{B} \vec{U}\] where $\vec{B}$ is a coefficient matrix and $\vec{U}$ is the input to the system.
+
+  \item If we make the input to the system \[\vec{U} = -\vec{K} \vec{X}\] then \begin{align*}
+          \dvec{X} & = \vec{A} \vec{X} - \vec{B} \vec{K} \vec{X} \\
+                   & = (\vec{A} - \vec{B} \vec{K}) \vec{X}
+        \end{align*} and now it is the eigenvalues of $\vec{A} - \vec{B} \vec{K}$ that determine the stability of the system, i.e. we can make an unstable system stable by appropriate choice of inputs.
+\end{itemize}
+
+\end{document}
