@@ -1,6 +1,7 @@
 \documentclass{article}
+\usepackage{amsfonts}
 \usepackage{amsmath}
-\usepackage{hyperref}
+\usepackage{bookmark}
 
 \hypersetup{
   colorlinks=true,
@@ -90,7 +91,7 @@ This document contains my notes on \href{https://www.youtube.com/playlist?list=P
         \end{align*}
 \end{itemize}
 
-\subsection{Stability and Eigenvalues}
+\section{Stability and Eigenvalues}
 
 \begin{itemize}
   \item A system $\dvec{x} = \vec{A} \vec{x}$ is stable if and only if all of the eigenvalues of $\vec{A}$ have negative real parts. This is because the solution is of the form\footnote{See \href{https://www.youtube.com/watch?v=nyqJJdhReiA\#t=15m15s}{here} for a proof of why $e^{\vec{A} t} = \vec{T} e^{\vec{D} t} \vec{T}^{-1}$.} \[\vec{x} = \vec{T} e^{\vec{D} t} \vec{T}^{-1} \vec{x}_0\] where \[e^{\vec{D} t} = \begin{pmatrix}
@@ -116,6 +117,30 @@ This document contains my notes on \href{https://www.youtube.com/playlist?list=P
                       & = (\sqrt{a^2 + b^2} e^{i \arctan \frac{b}{a}})^k  \\
                       & = \sqrt{a^2 + b^2}^k e^{i k \arctan \frac{b}{a}}.
         \end{align*}
+\end{itemize}
+
+\section{Linearizing Around a Fixed Point}
+
+\begin{itemize}
+  \item The \textbf{Jacobian matrix} of a vector-valued function of several variables $\vec{f} : \mathbb{R}^n \rightarrow \mathbb{R}^m$ is defined as \[D \vec{f} = \begin{pmatrix}
+            \frac{\partial f_1}{\partial x_1} & \cdots & \frac{\partial f_1}{\partial x_n} \\
+            \vdots                            & \ddots & \vdots                            \\
+            \frac{\partial f_m}{\partial x_1} & \cdots & \frac{\partial f_m}{\partial x_n}
+          \end{pmatrix}.\]
+
+  \item If $\vec{x}$ is a point and $\Delta \vec{x}$ is a displacement, both in $\mathbb{R}^n$, the Jacobian matrix can be used to linearize $\vec{f}$ around $\vec{x}$ \[\vec{f}(\vec{x} + \Delta \vec{x}) \approx \vec{f}(\vec{x}) + D \vec{f}|_{\vec{x}} \Delta \vec{x}.\]
+
+  \item To convert a nonlinear system $\dvec{x} = f(\vec{x})$ to a linear system $\dvec{x} = \vec{A} \vec{x}$:
+
+        \begin{enumerate}
+          \item Find fixed points $\overline{\vec{x}}$ such that $f(\overline{\vec{x}}) = \vec{0}$.
+
+          \item Use the Jacobian matrix to linearize $f(\vec{x})$ about $\overline{\vec{x}}$, i.e. \[\dvec{x} = f(\vec{x})\] is approximated by \begin{align*}
+                  \dvec{x} & = f(\overline{\vec{x}}) + D f|_{\overline{\vec{x}}} \Delta \vec{x} \\
+                           & = D f|_{\overline{\vec{x}}} \Delta \vec{x}                         \\
+                           & = \vec{A} \Delta \vec{x}
+                \end{align*} where $\vec{A} = D f|_{\overline{\vec{x}}}$. However this is only valid if all eigenvalues of $\vec{A}$ have a nonzero real part.
+        \end{enumerate}
 \end{itemize}
 
 \end{document}
