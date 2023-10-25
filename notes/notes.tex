@@ -75,13 +75,15 @@
           \frac{d}{d t} \frac{\partial \mathcal{L}}{\partial \dot{\theta}} - \frac{\partial \mathcal{L}}{\partial \theta}         & = 0  \\
           \frac{d}{d t} (m l^2 \dot{\theta} - m l \dot{x} \cos \theta) - m l \dot{x} \dot{\theta} \sin \theta - m g l \sin \theta & = 0  \\
           l \ddot{\theta} - \ddot{x} \cos \theta - g \sin \theta                                                                  & = 0.
-        \end{align*} As the goal is to keep $\theta$ close to $0$ this can be linearized by using the approximations $\cos \theta \approx 1$ and $\sin \theta \approx \theta$ giving \[l \ddot{\theta} - \ddot{x} - g \theta = 0.\]
+        \end{align*}
 
   \item The Euler-Lagrange equation for the $x$ coordinate is \begin{align*}
           \frac{d}{d t} \frac{\partial \mathcal{L}}{\partial \dot{x}} - \frac{\partial \mathcal{L}}{\partial x} & = F  \\
           \frac{d}{d t} [(m + M) \dot{x} - m l \dot{\theta} \cos \theta]                                        & = F  \\
           (m + M) \ddot{x} - m l \ddot{\theta} \cos \theta + m l \dot{\theta}^2 \sin \theta                     & = F.
-        \end{align*} Using the same approximations as above gives \[(m + M) \ddot{x} - m l \ddot{\theta} + m l \dot{\theta}^2 \theta = F.\]
+        \end{align*}
+
+  \item Solving these equations for $\ddot{\theta}$ and $\ddot{x}$ gives \[\ddot{\theta} = \frac{(m + M) g \sin \theta + F \cos \theta - m l \dot{\theta}^2 \cos \theta \sin \theta}{l (m + M) - m l \cos^2 \theta}\] and \[\ddot{x} = \frac{2 F + m g \sin 2 \theta - 2 m l \dot{\theta}^2 \sin \theta}{m + 2 M - m \cos 2 \theta}.\]
 \end{itemize}
 
 \end{document}
