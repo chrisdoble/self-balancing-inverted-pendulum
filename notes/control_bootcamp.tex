@@ -203,4 +203,14 @@ This document contains my notes on \href{https://www.youtube.com/playlist?list=P
   \item The first column in the controllability matrix can be thought of as an initial ``kick'' to the system via the input vector $\vec{u}$ and each subsequent column can be thought of as the state of the system one time step later. This lets us see which dimensions of the state space can be controlled via input.
 \end{itemize}
 
+\section{Degrees of Controllability and Gramians}
+
+\begin{itemize}
+  \item The \textbf{Gramian} of a system is defined as \[W_t = \int_0^t e^{\vec{A} t} \vec{B} \vec{B}^T e^{\vec{A}^T \tau} \,d \tau.\] It is real-valued and symmetric so it has positive, real eigenvalues. If you sort the eigenvalues from largest to smallest, the same ordering of the associated eigenvectors is also ordering them from most to least controllable.
+
+  \item The Gramian gives a finer grained answer to the question ``Is the system controllable?'' than the rank of the controllability matrix — it tells you how controllable it is in different dimsensions of the state space.
+
+  \item A system is said to be \textbf{stabilisable} if all unstable eigenvectors of $\vec{A}$ are in the controllable subspace, i.e. it's OK if a subset of the state vector isn't controllable providing it's stable — it will stabilise by itself.
+\end{itemize}
+
 \end{document}
