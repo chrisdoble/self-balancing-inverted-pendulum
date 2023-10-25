@@ -1,0 +1,428 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 13.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     16592,        420]
+NotebookOptionsPosition[     14348,        384]
+NotebookOutlinePosition[     14738,        400]
+CellTagsIndexPosition[     14695,        397]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell["\<\
+This notebook contains a simulation of an uncontrolled inverted pendulum on a \
+cart.
+
+Import dependencies\
+\>", "Text",
+ CellChangeTimes->{{3.9072586096338673`*^9, 3.907258612017831*^9}, {
+  3.907260463889935*^9, 
+  3.907260501292018*^9}},ExpressionUUID->"6f23f6d3-8d2b-4d75-87a1-\
+ead8167eeb11"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"AppendTo", "[", 
+   RowBox[{"$Path", ",", 
+    RowBox[{"NotebookDirectory", "[", "]"}]}], "]"}], ";"}]], "Input",
+ CellChangeTimes->{{3.9072570721479883`*^9, 3.90725707818414*^9}, {
+  3.9072571525208073`*^9, 3.9072571557318974`*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"7616e525-21de-4e9e-86a9-c5e0dc4690e2"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"<<", "draw_inverted_pendulum.m"}], ";"}]], "Input",
+ CellChangeTimes->{{3.907257089096038*^9, 3.9072570931941137`*^9}, 
+   3.907257165903479*^9, {3.907258147618915*^9, 3.90725814911399*^9}, {
+   3.907258518129669*^9, 3.907258519215239*^9}},
+ CellLabel->"In[2]:=",ExpressionUUID->"9115a0c4-eb87-422e-8c17-280500067913"],
+
+Cell["\<\
+
+Define constants\
+\>", "Text",
+ CellChangeTimes->{{3.907258617566482*^9, 3.9072586196357603`*^9}, 
+   3.9072587080515537`*^9},ExpressionUUID->"84097227-2b46-445e-9198-\
+ae41e2466140"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Acceleration", " ", "due", " ", "to", " ", "gravity", " ", "in", " ", 
+    RowBox[{"m", "/", 
+     RowBox[{"s", "^", "2"}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"g", "=", "9.8"}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.9072585551220303`*^9, 3.907258556790978*^9}, {
+  3.9072596892791348`*^9, 3.907259700848218*^9}, {3.907259879853743*^9, 
+  3.907259890304781*^9}},
+ CellLabel->"In[3]:=",ExpressionUUID->"822435bf-0b01-4124-9520-fa96c97616cb"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "length", " ", "of", " ", "the", " ", "pendulum", " ", "in", 
+    " ", "m"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"l", "=", "1"}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.907258565759848*^9, 3.907258566583776*^9}, {
+  3.907259702446516*^9, 3.907259707900969*^9}, {3.9072598917632313`*^9, 
+  3.9072598920731897`*^9}},
+ CellLabel->"In[4]:=",ExpressionUUID->"6d55df48-1779-462f-99de-67f4d0b1e217"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "mass", " ", "of", " ", "the", " ", "pendulum", " ", "in", " ",
+     "kg"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"m", "=", "1"}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.907258520100608*^9, 3.907258522316782*^9}, {
+  3.907259712475973*^9, 3.907259717026128*^9}, {3.9072598934558573`*^9, 
+  3.907259893800728*^9}},
+ CellLabel->"In[5]:=",ExpressionUUID->"8b00ea3f-d219-4710-b659-f4ba277c863f"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "mass", " ", "of", " ", "the", " ", "cart", " ", "in", " ", 
+    "kg"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"M", "=", "1"}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.907258523314209*^9, 3.907258524807776*^9}, {
+  3.9072597182796593`*^9, 3.9072597238098583`*^9}, {3.9072598951118526`*^9, 
+  3.9072598954468193`*^9}, {3.907262194602169*^9, 3.907262250954935*^9}},
+ CellLabel->"In[30]:=",ExpressionUUID->"a0084379-a273-461c-9a88-ed371c9c5a66"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "duration", " ", "of", " ", "the", " ", "simulation", " ", 
+    "in", " ", "s"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"tMax", "=", "10"}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.9072591401843147`*^9, 3.90725914454907*^9}, {
+  3.90725964210779*^9, 3.907259642182817*^9}, {3.9072598730585747`*^9, 
+  3.9072598992819967`*^9}},
+ CellLabel->"In[7]:=",ExpressionUUID->"08ebcebf-0470-4734-9d60-ac34b55e28d1"],
+
+Cell["\<\
+
+Define initial conditions\
+\>", "Text",
+ CellChangeTimes->{{3.907258644938279*^9, 3.907258662703244*^9}, 
+   3.907258709742606*^9},ExpressionUUID->"5b220193-0ed3-4cf8-81a9-\
+06c08913068f"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "initial", " ", "angle", " ", "of", " ", "the", " ", 
+    "pendulum", " ", "in", " ", "rad"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"\[Theta]0", "=", 
+    RowBox[{"Pi", "/", "4"}]}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.907258666601866*^9, 3.907258672269446*^9}, {
+  3.907259901806073*^9, 3.907259925392294*^9}, {3.907260399660734*^9, 
+  3.907260411059881*^9}},
+ CellLabel->"In[8]:=",ExpressionUUID->"f7eb5d5c-1595-4280-94fc-6dd5b5fea4a6"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "initial", " ", "angular", " ", "velocity", " ", "of", " ", 
+    "the", " ", "pendulum", " ", "in", " ", 
+    RowBox[{"rad", "/", "s"}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"\[Omega]0", "=", "0"}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.9072586749437103`*^9, 3.9072586830367327`*^9}, {
+  3.9072599124529133`*^9, 3.9072599273725767`*^9}},
+ CellLabel->"In[9]:=",ExpressionUUID->"d758f8b4-9c64-4969-99a1-2ef8d8d73544"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "initial", " ", "x", " ", "position", " ", "of", " ", "the", 
+    " ", "cart", " ", "in", " ", "m"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"x0", "=", "0"}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.9072586909188232`*^9, 3.907258692828266*^9}, {
+  3.907259928988006*^9, 3.9072599376519938`*^9}},
+ CellLabel->"In[10]:=",ExpressionUUID->"34772cbd-6723-4b20-b597-2a702bec6451"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "initial", " ", "x", " ", "velocity", " ", "of", " ", "the", 
+    " ", "cart", " ", "in", " ", 
+    RowBox[{"m", "/", "s"}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"v0", "=", "0"}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.907258694468794*^9, 3.907258696608348*^9}, {
+  3.907259939443335*^9, 3.9072599467379847`*^9}},
+ CellLabel->"In[11]:=",ExpressionUUID->"2d65f72c-b68d-4122-9090-9023b655d669"],
+
+Cell["\<\
+
+Solve the equations of motion\
+\>", "Text",
+ CellChangeTimes->{{3.9072589768559303`*^9, 
+  3.9072589793433733`*^9}},ExpressionUUID->"3dff4bc7-63ad-4625-bd8a-\
+93c628fc494f"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"f\[Theta]", ",", "fx"}], "}"}], "=", 
+   RowBox[{"NDSolveValue", "[", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"{", "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"\[Theta]", "[", "0", "]"}], "==", "\[Theta]0"}], ",", 
+       "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"\[Theta]", "'"}], "[", "0", "]"}], "==", "\[Omega]0"}], ",",
+        "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"\[Theta]", "''"}], "[", "t", "]"}], "==", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"m", "+", "M"}], ")"}], "g", " ", 
+            RowBox[{"Sin", "[", 
+             RowBox[{"\[Theta]", "[", "t", "]"}], "]"}]}], "-", 
+           RowBox[{"m", " ", "l", " ", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"\[Theta]", "'"}], "[", "t", "]"}], "^", "2"}], 
+            RowBox[{"Cos", "[", 
+             RowBox[{"\[Theta]", "[", "t", "]"}], "]"}], 
+            RowBox[{"Sin", "[", 
+             RowBox[{"\[Theta]", "[", "t", "]"}], "]"}]}]}], ")"}], "/", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"l", 
+            RowBox[{"(", 
+             RowBox[{"m", "+", "M"}], ")"}]}], "-", 
+           RowBox[{"m", " ", "l", " ", 
+            RowBox[{
+             RowBox[{"Cos", "[", 
+              RowBox[{"\[Theta]", "[", "t", "]"}], "]"}], "^", "2"}]}]}], 
+          ")"}]}]}], ",", "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"x", "[", "0", "]"}], "==", "x0"}], ",", 
+       "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"x", "'"}], "[", "0", "]"}], "==", "v0"}], ",", 
+       "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"x", "''"}], "[", "t", "]"}], "==", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"m", " ", "g", " ", 
+            RowBox[{"Sin", "[", 
+             RowBox[{"2", 
+              RowBox[{"\[Theta]", "[", "t", "]"}]}], "]"}]}], "-", 
+           RowBox[{"2", "m", " ", "l", " ", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"\[Theta]", "'"}], "[", "t", "]"}], "^", "2"}], 
+            RowBox[{"Sin", "[", 
+             RowBox[{"\[Theta]", "[", "t", "]"}], "]"}]}]}], ")"}], "/", 
+         RowBox[{"(", 
+          RowBox[{"m", "+", 
+           RowBox[{"2", "M"}], "-", 
+           RowBox[{"m", " ", 
+            RowBox[{"Cos", "[", 
+             RowBox[{"2", 
+              RowBox[{"\[Theta]", "[", "t", "]"}]}], "]"}]}]}], ")"}]}]}]}], 
+      "\[IndentingNewLine]", "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{"{", 
+      RowBox[{"\[Theta]", ",", "x"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{"{", 
+      RowBox[{"t", ",", "0", ",", "tMax"}], "}"}]}], "\[IndentingNewLine]", 
+    "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.907258988060911*^9, 3.907259168709345*^9}, {
+   3.9072596610218477`*^9, 3.907259663042912*^9}, 3.907259951406672*^9, {
+   3.9072601574954567`*^9, 3.9072601783115873`*^9}, {3.907260219287938*^9, 
+   3.907260287453849*^9}, {3.9072603268701487`*^9, 3.90726033005197*^9}},
+ CellLabel->"In[31]:=",ExpressionUUID->"55c4743f-8a74-4e3a-a7bc-d175e88acdb2"],
+
+Cell["\<\
+
+Generate an animation\
+\>", "Text",
+ CellChangeTimes->{{3.907259227274688*^9, 
+  3.907259230791568*^9}},ExpressionUUID->"192c8090-27cf-4c54-948e-\
+62b4109ea7fa"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Animate", "[", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"drawInvertedPendulum", "[", 
+    RowBox[{
+     RowBox[{"f\[Theta]", "[", "t", "]"}], ",", 
+     RowBox[{"fx", "[", "t", "]"}]}], "]"}], ",", "\[IndentingNewLine]", 
+   RowBox[{"{", 
+    RowBox[{"t", ",", "0", ",", "tMax"}], "}"}], ",", "\[IndentingNewLine]", 
+   RowBox[{"DefaultDuration", "->", "tMax"}]}], "\[IndentingNewLine]", 
+  "]"}]], "Input",
+ CellChangeTimes->{{3.907259358112937*^9, 3.9072593682832108`*^9}, {
+  3.907259480325281*^9, 3.907259482934576*^9}, {3.9072596102586184`*^9, 
+  3.907259616993867*^9}, {3.907259980826456*^9, 3.907259988177835*^9}},
+ CellLabel->"In[32]:=",ExpressionUUID->"b1012c08-5388-4d92-8955-a2114983e052"],
+
+Cell[BoxData[
+ TagBox[
+  StyleBox[
+   DynamicModuleBox[{$CellContext`t$$ = 0.06729984283447266, Typeset`show$$ = 
+    True, Typeset`bookmarkList$$ = {}, Typeset`bookmarkMode$$ = "Menu", 
+    Typeset`animator$$, Typeset`animvar$$ = 1, Typeset`name$$ = 
+    "\"untitled\"", Typeset`specs$$ = {{
+      Hold[$CellContext`t$$], 0, 10}}, Typeset`size$$ = {360., {85., 90.}}, 
+    Typeset`update$$ = 0, Typeset`initDone$$, Typeset`skipInitDone$$ = True}, 
+    
+    DynamicBox[Manipulate`ManipulateBoxes[
+     1, StandardForm, "Variables" :> {$CellContext`t$$ = 0}, 
+      "ControllerVariables" :> {}, 
+      "OtherVariables" :> {
+       Typeset`show$$, Typeset`bookmarkList$$, Typeset`bookmarkMode$$, 
+        Typeset`animator$$, Typeset`animvar$$, Typeset`name$$, 
+        Typeset`specs$$, Typeset`size$$, Typeset`update$$, Typeset`initDone$$,
+         Typeset`skipInitDone$$}, 
+      "Body" :> $CellContext`drawInvertedPendulum[
+        $CellContext`f\[Theta][$CellContext`t$$], 
+        $CellContext`fx[$CellContext`t$$]], 
+      "Specifications" :> {{$CellContext`t$$, 0, 10, DefaultDuration -> 10, 
+         AppearanceElements -> {
+          "ProgressSlider", "PlayPauseButton", "FasterSlowerButtons", 
+           "DirectionButton"}}}, 
+      "Options" :> {
+       ControlType -> Animator, AppearanceElements -> None, DefaultBaseStyle -> 
+        "Animate", DefaultLabelStyle -> "AnimateLabel", SynchronousUpdating -> 
+        True, ShrinkingDelay -> 20.}, "DefaultOptions" :> {}],
+     ImageSizeCache->{404., {122., 127.}},
+     SingleEvaluation->True],
+    Deinitialization:>None,
+    DynamicModuleValues:>{},
+    SynchronousInitialization->True,
+    UndoTrackedVariables:>{Typeset`show$$, Typeset`bookmarkMode$$},
+    UnsavedVariables:>{Typeset`initDone$$},
+    UntrackedVariables:>{Typeset`size$$}], "Animate",
+   Deployed->True,
+   StripOnInput->False],
+  Manipulate`InterpretManipulate[1]]], "Output",
+ CellChangeTimes->{
+  3.9072593691528587`*^9, 3.907259483585455*^9, 3.907259514485691*^9, 
+   3.90725957975103*^9, 3.907259617538549*^9, 3.907259990980681*^9, {
+   3.907260378344762*^9, 3.907260415649383*^9}, 3.907261739714024*^9, {
+   3.907262200691729*^9, 3.907262254723489*^9}},
+ CellLabel->"Out[32]=",ExpressionUUID->"db584e37-2710-4037-96eb-58d30ec672d6"]
+}, Open  ]],
+
+Cell["\<\
+
+Export a GIF of the animation\
+\>", "Text",
+ CellChangeTimes->{{3.907261862895178*^9, 
+  3.907261867161022*^9}},ExpressionUUID->"8ed24d7d-38ee-48b2-bfc6-\
+4ac0df359fdc"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"Export", "[", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"FileNameJoin", "[", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"NotebookDirectory", "[", "]"}], ",", 
+       "\"\<uncontrolled.gif\>\""}], "}"}], "]"}], ",", "\[IndentingNewLine]", 
+    RowBox[{"Table", "[", 
+     RowBox[{
+      RowBox[{"drawInvertedPendulum", "[", 
+       RowBox[{
+        RowBox[{"f\[Theta]", "[", "t", "]"}], ",", 
+        RowBox[{"fx", "[", "t", "]"}]}], "]"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"t", ",", "0", ",", "tMax", ",", 
+        RowBox[{"1", "/", "24"}]}], "}"}]}], "]"}], ",", 
+    RowBox[{"DisplayDurations", "->", 
+     RowBox[{"1", "/", "24"}]}]}], "\[IndentingNewLine]", "]"}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.907261774382659*^9, 3.907261906681417*^9}, 
+   3.907261945528573*^9},
+ CellLabel->"In[17]:=",ExpressionUUID->"63c9778f-9b55-487f-98c9-0f20bc74a7f6"]
+},
+WindowSize->{720, 847},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
+FrontEndVersion->"13.3 for Mac OS X ARM (64-bit) (June 3, 2023)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"3e4048d2-9fb8-4625-a383-58bc87ecb831"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 307, 9, 81, "Text",ExpressionUUID->"6f23f6d3-8d2b-4d75-87a1-ead8167eeb11"],
+Cell[868, 31, 346, 7, 30, "Input",ExpressionUUID->"7616e525-21de-4e9e-86a9-c5e0dc4690e2"],
+Cell[1217, 40, 353, 6, 30, "Input",ExpressionUUID->"9115a0c4-eb87-422e-8c17-280500067913"],
+Cell[1573, 48, 194, 6, 58, "Text",ExpressionUUID->"84097227-2b46-445e-9198-ae41e2466140"],
+Cell[1770, 56, 532, 12, 52, "Input",ExpressionUUID->"822435bf-0b01-4124-9520-fa96c97616cb"],
+Cell[2305, 70, 491, 11, 52, "Input",ExpressionUUID->"6d55df48-1779-462f-99de-67f4d0b1e217"],
+Cell[2799, 83, 488, 11, 52, "Input",ExpressionUUID->"8b00ea3f-d219-4710-b659-f4ba277c863f"],
+Cell[3290, 96, 537, 11, 52, "Input",ExpressionUUID->"a0084379-a273-461c-9a88-ed371c9c5a66"],
+Cell[3830, 109, 499, 11, 52, "Input",ExpressionUUID->"08ebcebf-0470-4734-9d60-ac34b55e28d1"],
+Cell[4332, 122, 199, 6, 58, "Text",ExpressionUUID->"5b220193-0ed3-4cf8-81a9-06c08913068f"],
+Cell[4534, 130, 538, 12, 52, "Input",ExpressionUUID->"f7eb5d5c-1595-4280-94fc-6dd5b5fea4a6"],
+Cell[5075, 144, 515, 11, 52, "Input",ExpressionUUID->"d758f8b4-9c64-4969-99a1-2ef8d8d73544"],
+Cell[5593, 157, 468, 10, 52, "Input",ExpressionUUID->"34772cbd-6723-4b20-b597-2a702bec6451"],
+Cell[6064, 169, 491, 11, 52, "Input",ExpressionUUID->"2d65f72c-b68d-4122-9090-9023b655d669"],
+Cell[6558, 182, 184, 6, 58, "Text",ExpressionUUID->"3dff4bc7-63ad-4625-bd8a-93c628fc494f"],
+Cell[6745, 190, 3288, 85, 283, "Input",ExpressionUUID->"55c4743f-8a74-4e3a-a7bc-d175e88acdb2"],
+Cell[10036, 277, 172, 6, 58, "Text",ExpressionUUID->"192c8090-27cf-4c54-948e-62b4109ea7fa"],
+Cell[CellGroupData[{
+Cell[10233, 287, 729, 14, 115, "Input",ExpressionUUID->"b1012c08-5388-4d92-8955-a2114983e052"],
+Cell[10965, 303, 2266, 45, 268, "Output",ExpressionUUID->"db584e37-2710-4037-96eb-58d30ec672d6"]
+}, Open  ]],
+Cell[13246, 351, 180, 6, 58, "Text",ExpressionUUID->"8ed24d7d-38ee-48b2-bfc6-4ac0df359fdc"],
+Cell[13429, 359, 915, 23, 115, "Input",ExpressionUUID->"63c9778f-9b55-487f-98c9-0f20bc74a7f6"]
+}
+]
+*)
+
