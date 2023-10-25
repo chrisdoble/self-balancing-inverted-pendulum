@@ -223,4 +223,19 @@ This document contains my notes on \href{https://www.youtube.com/playlist?list=P
         \end{align*} and substitute $\lambda$ with $\vec{A}$, the equation is satisfied.
 \end{itemize}
 
+\setcounter{section}{13}
+\section{Linear Quadratic Regulator (LQR) Control for the Inverted Pendulum on a Cart}
+
+\begin{itemize}
+  \item The \textbf{linear quadratic regulator} is a feedback controller that minimises the cost of operating the system.
+
+  \item The cost is defined as \[J = \int_0^\infty (\vec{x}^T \vec{Q} \vec{x} + \vec{u}^T \vec{R} \vec{u}) \,dt\] where $\vec{x}$ is an $n \times 1$ state vector, $\vec{Q}$ is an $n \times n$ matrix that determines the cost of a given state vector, $\vec{u}$ is an $q \times 1$ input vector, and $\vec{R}$ is a $q \times q$ matrix that determines the cost of a given input vector.
+
+  \item $\vec{Q}$ can be used to associate a cost with given states, e.g. in the case of an inverted pendulum we could say it is $1$ unit cost for every $1$ unit distance $x$ is away from its target, or it is $100$ unit cost for every radian $\theta$ is away from its target.
+
+  \item Similarly, $\vec{R}$ can be used to associate a cost with given inputs, e.g. if moving the cart uses a lot of electricity we could define some cost for that.
+
+  \item The linear quadratic regulator finds a matrix $\vec{K}$ that adjusts the eigenvalues of the system to minimise the above cost.
+\end{itemize}
+
 \end{document}
