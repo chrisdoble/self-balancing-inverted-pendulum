@@ -213,4 +213,14 @@ This document contains my notes on \href{https://www.youtube.com/playlist?list=P
   \item A system is said to be \textbf{stabilisable} if all unstable eigenvectors of $\vec{A}$ are in the controllable subspace, i.e. it's OK if a subset of the state vector isn't controllable providing it's stable — it will stabilise by itself.
 \end{itemize}
 
+\setcounter{section}{9}
+\section{Cayley-Hamilton Theorem}
+
+\begin{itemize}
+  \item The \textbf{Cayley-Hamilton theorem} states that every square matrix satisfies its own characteristic equation, i.e. if you take the characteristic equation \begin{align*}
+          \det (\vec{A} - \lambda \vec{I})                                                   & = 0 \\
+          \lambda^n + a_{n - 1} \lambda^{n - 1} + \cdots + a_2 \lambda^2 + a_1 \lambda + a_0 & = 0
+        \end{align*} and substitute $\lambda$ with $\vec{A}$, the equation is satisfied.
+\end{itemize}
+
 \end{document}
