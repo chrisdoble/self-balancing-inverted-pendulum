@@ -143,4 +143,44 @@ This document contains my notes on \href{https://www.youtube.com/playlist?list=P
         \end{enumerate}
 \end{itemize}
 
+\section{Controllability}
+
+\begin{itemize}
+  \item A system with control can be modelled using the equation \[\dvec{x} = \vec{A} \vec{x} + \vec{B} \vec{u}\] where $\vec{u}$ is the input to the system.
+
+  \item If we can completely observe the state of the system, i.e. we have access to all state variables, we can let $\vec{u} = -\vec{K} \vec{x}$ and thus \begin{align*}
+          \dvec{x} & = \vec{A} \vec{x} + \vec{B} \vec{u}         \\
+                   & = \vec{A} \vec{x} - \vec{B} \vec{K} \vec{x} \\
+                   & = (\vec{A} - \vec{B} \vec{K}) \vec{x}
+        \end{align*} and we can control the eigenvalues/stability of the system via careful choice of $\vec{K}$.
+
+  \item A system is said to be \textbf{controllable} if it's possible to choose $\vec{u} = -\vec{K} \vec{x}$ such that the system has any arbitrary eigenvalues and thus the state can be manipulated in any desired way.
+
+  \item In most cases $\vec{A}$ (the linearized equations of motion) and $\vec{B}$ (the effects of various inputs) are predetermined and you only get to control $\vec{u}$.
+
+  \item Some combinations of $\vec{A}$ and $\vec{B}$ are controllable and some aren't. For example, \begin{align*}
+          \dvec{x}        & = \vec{A} \vec{x} + \vec{B} \vec{u}                 \\
+          \begin{pmatrix}
+            \dot{x}_1 \\
+            \dot{x}_2
+          \end{pmatrix} & = \begin{pmatrix}
+                              1 & 0 \\
+                              0 & 2
+                            \end{pmatrix} \begin{pmatrix}
+                                            x_1 \\
+                                            x_2
+                                          \end{pmatrix} + \begin{pmatrix}
+                                                            0 \\
+                                                            1
+                                                          \end{pmatrix} \vec{u}
+        \end{align*} isn't controllable because $\dot{x}_1 = x_1$ isn't affected by $\vec{u}$. However if $\vec{B}$ were instead \[\begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+          \end{pmatrix}\] the system would be controllable because $\vec{u}$ can affect both $\dot{x}_1$ and $\dot{x}_2$.
+
+  \item A system with state space in $\mathbb{R}^n$ is controllable if the controllability matrix \[C = \begin{pmatrix}
+            \vec{B} & \vec{A} \vec{B} & \vec{A}^2 \vec{B} & \cdots & \vec{A}^{n - 1} \vec{B}
+          \end{pmatrix}\] has rank $n$.
+\end{itemize}
+
 \end{document}
