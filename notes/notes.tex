@@ -2,6 +2,8 @@
 \usepackage{amsmath} % For align*
 \usepackage{tikz} % For diagrams
 
+\renewcommand{\vec}[1]{\boldsymbol{\mathbf{#1}}}
+
 \begin{document}
 
 \tableofcontents
@@ -84,6 +86,46 @@
         \end{align*}
 
   \item Solving these equations for $\ddot{\theta}$ and $\ddot{x}$ gives \[\ddot{\theta} = \frac{(m + M) g \sin \theta + F \cos \theta - m l \dot{\theta}^2 \cos \theta \sin \theta}{l (m + M) - m l \cos^2 \theta}\] and \[\ddot{x} = \frac{2 F + m g \sin 2 \theta - 2 m l \dot{\theta}^2 \sin \theta}{m + 2 M - m \cos 2 \theta}.\]
+\end{itemize}
+
+\section{Linearization, Stability, and Controllability}
+
+\begin{itemize}
+  \item The state vector for this system is \[\begin{pmatrix}
+            \theta       \\
+            \dot{\theta} \\
+            x            \\
+            \dot{x}
+          \end{pmatrix}.\]
+
+  \item The fixed point about which the system will be linearized is \[\begin{pmatrix}
+            0 \\
+            0 \\
+            0 \\
+            0
+          \end{pmatrix}.\]
+
+  \item The $\vec{A}$ matrix is equal to the Jacobian matrix evaluated at the fixed point \[\vec{A} = \begin{pmatrix}
+            0                     & 1 & 0 & 0 \\
+            \frac{g (m + M)}{l M} & 0 & 0 & 0 \\
+            0                     & 0 & 0 & 1 \\
+            \frac{g m}{M}         & 0 & 0 & 0
+          \end{pmatrix}.\]
+
+  \item The non-zero eigenvalues of $\vec{A}$ are \[\pm \sqrt{\frac{g (m + M)}{l M}}.\] Because one of these has a positive real part the system is unstable.
+
+  \item Rearranging the equations of motion to find the coefficients of $F$ gives \[\ddot{\theta} = f(\theta, \dot{\theta}) + \frac{\cos \theta}{l (m + M) - m \cos^2 \theta} F\] and \[\ddot{x} = g(\theta, \dot{\theta}) + \frac{2}{m + 2 M - m \cos 2 \theta} F.\] Using the small angle approximation for $\cos$ gives \[\ddot{\theta} = f(\theta, \dot{\theta}) + \frac{1}{l M} F\] and \[\ddot{x} = g(\theta, \dot{\theta}) + \frac{1}{M} F\] resulting in the $\vec{B}$ matrix \[\begin{pmatrix}
+            0             \\
+            \frac{1}{l M} \\
+            0             \\
+            \frac{1}{M}
+          \end{pmatrix}.\]
+
+  \item The controllability matrix \[C = \begin{pmatrix}
+            \vec{B} & \vec{A} \vec{B} & \vec{A}^2 \vec{B} & \vec{A}^3 \vec{B}
+          \end{pmatrix}\] has full rank ($4$) so the system is controllable via the force $F$ on the cart.
+
+  \item The ideal state feedback gains matrix $\vec{K}$ can be determined using Mathematica's \texttt{LQRegulatorGains} function.
 \end{itemize}
 
 \end{document}
