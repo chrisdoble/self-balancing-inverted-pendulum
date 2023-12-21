@@ -66,24 +66,14 @@ const uint8_t motorSpeedPwmPin = 11;
  */
 const uint8_t motorSpeedDirPin = 12;
 
-/**
- * Whether the system has been killed.
- *
- * When the system is killed the motor turns off and the system must be
- * restarted. This happens if, e.g., the cart gets too close to an end.
- */
-bool killed = false;
-
-/** The last measured angle of the pendulum (in radians). */
+/** The last measured angle of the pendulum (in rad). */
 volatile double pendulumAngle = 0.0;
 
-/** The last measured angle of the motor (in radians). */
+/** The last measured angle of the motor (in rad). */
 volatile double motorAngle = 0.0;
 
 /** The last measured distance between the cart and the limit switch (in m). */
 volatile double cartPosition = 0.0;
-
-const double pi = 3.14159265;
 
 /** The length of the track (in m). */
 const double trackLength = 0.965;
@@ -91,18 +81,33 @@ const double trackLength = 0.965;
 /** The width of the cart (in m). */
 const double cartWidth = 0.035;
 
-/**
- * The system's configuration state.
- *
- * The system starts UNCONFIGURED, moves the cart until the limit switch is
- * pressed and the motor angle can be ZEROED, then moves the cart to the centre
- * of the track at which point it is CONFIGURED.
- */
-enum ConfigurationState {
-  UNCONFIGURED,
-  ZEROED,
-  CONFIGURED
-} configurationState = UNCONFIGURED;
+/** The states the system moves through during operation. */
+enum State {
+  /**
+   * The system has just started. Move the cart until it is pressing the
+   * limit switch, at which point the motor angle can be zeroed. This ensures
+   * the motor angle and the cart position are accurate going forward.
+   */
+  STARTED,
+  /** The motor angle has been zeroed. Move the cart to the centre. */
+  MOTOR_ANGLE_ZEROED,
+  /**
+   * The cart is in the centre. Wait for the pendulum to stop swinging at which
+   * point the pendulum angle can be zeroed. Note that this means a pendulum
+   * angle of 0° corresponds to the pendulum pointing down rather than up.
+   */
+  CART_CENTRED,
+  /**
+   * The pendulum angle has been zeroed. Wait for the pendulum angle to near
+   * ±160° at which point the pendulum angle can be offset by ±180°. Now a
+   * pendulum angle of 0° corresponds to the pendulum pointing up.
+   */
+  PENDULUM_ANGLE_ZEROED,
+  /** The system is running, tryin to keep the pendulum upright. */
+  RUNNING,
+  /** The system has been killed. */
+  KILLED
+} state = STARTED;
 
 void setup() {
   // Delay 50ms to let the rotary encoders wake up
@@ -131,10 +136,7 @@ void onPendulumAngleAPinChange() {
 }
 
 void onMotorAngleAPinChange() {
-  // Because of the way the motor's rotary encoder is mounted (facing away from
-  // the front of the system), the angles are opposite what you would expect.
-  // Invert them to make things a bit easier.
-  motorAngle -= getAngleChange(motorAngleAPin, motorAngleBPin);
+  motorAngle += getAngleChange(motorAngleAPin, motorAngleBPin);
 
   // The radius of the timing pulley on the axle of the motor (in m).
   // Multiplying the motor angle by this value gives the distance between the
@@ -145,68 +147,147 @@ void onMotorAngleAPinChange() {
 
 double getAngleChange(const uint8_t aPin, const uint8_t bPin) {
   // The rotary encoders run in 9 bit mode, so a change in a A_LSU_U pin
-  // corresponds to a change of 0.704° or 0.0123 radians.
+  // corresponds to a change of 0.704° or 0.0123 rad.
   const double resolution = 0.0123;
 
   if (digitalRead(aPin) == HIGH) {
     if (digitalRead(bPin) == HIGH) {
-      return resolution;
-    } else {
       return -resolution;
+    } else {
+      return resolution;
     }
   } else {
     if (digitalRead(bPin) == HIGH) {
-      return -resolution;
-    } else {
       return resolution;
+    } else {
+      return -resolution;
     }
   }
 }
 
 void loop() {
-  if (killed) {
-    digitalWrite(motorSpeedPwmPin, LOW);
-    return;
-  }
+  checkLimitSwitch();
+  checkMagnetsInRange();
 
-  // The rotary encoder magnets must be in range to do anything. Check them first.
+  switch (state) {
+    case STARTED: {
+      // Move the cart until it's pressing the limit switch. We do this inside
+      // the case statement because the limit switch normally acts as a kill
+      // switch and we temporarily want to disable that behaviour.
+      while (digitalRead(limitSwitchPin) == LOW) {
+        setMotorSpeed(-10);
+      }
+
+      motorAngle = 0.0;
+
+      // Move the cart until it's not pressing the limit switch (otherwise it
+      // will kill the system once we move to the next state).
+      while (digitalRead(limitSwitchPin) == HIGH) {
+        setMotorSpeed(10);
+      }
+
+      Serial.println("Motor angle zeroed");
+      state = MOTOR_ANGLE_ZEROED;
+      break;
+    }
+
+    case MOTOR_ANGLE_ZEROED: {
+      // Move the cart to the centre of the track
+      const double target = (trackLength - cartWidth) / 2.0;
+      if (cartPosition < target) {
+        setMotorSpeed(10);
+      } else {
+        Serial.println("Cart centred");
+        setMotorSpeed(0);
+        state = CART_CENTRED;
+      }
+      break;
+    }
+
+    case CART_CENTRED: {
+      // Measure the pendulum angle a number of times, 100ms apart
+      const uint8_t angleCount = 20;
+      double angles[angleCount];
+
+      for (uint8_t i = 0; i < angleCount; i++) {
+        angles[i] = pendulumAngle;
+        delay(100);
+      }
+
+      // Continue measuring the pendulum angle every 100ms until all of them
+      // are within 1° (0.0175 rad) of each other, i.e. the pendulum is still.
+      uint8_t i = 0;
+      while (getIntervalSize(angles, angleCount) > 0.0175) {
+        angles[i] = pendulumAngle;
+        i = (i + 1) % angleCount;
+        delay(100);
+      }
+
+      pendulumAngle = 0.0;
+
+      // Move the cart slightly to let the user know it's ready for the pendulum
+      // to be rotated upright. This won't be necessary once it can swing the
+      // pendulum upright itself.
+      setMotorSpeed(-5);
+      delay(100);
+      setMotorSpeed(5);
+      delay(100);
+      setMotorSpeed(0);
+
+      Serial.println("Pendulum angle zeroed");
+      state = PENDULUM_ANGLE_ZEROED;
+      break;
+    }
+
+    case PENDULUM_ANGLE_ZEROED: {
+      // Wait for the user to rotate the pendulum within 20° of upright (±160°
+      // or ±2.793 rad), then offset the pendulum angle such that upright is 0.0.
+      if (abs(pendulumAngle) > 2.793) {
+        pendulumAngle += -M_PI * sign(pendulumAngle);
+        Serial.println("Running");
+        state = RUNNING;
+      }
+      break;
+    }
+
+    case RUNNING: {
+      if (!checkCartPosition()) {
+        break;
+      }
+
+      Serial.print(0);
+      Serial.print(" ");
+      Serial.print(M_PI);
+      Serial.print(" ");
+      Serial.print(-M_PI);
+      Serial.print(" ");
+      Serial.println(pendulumAngle);
+      break;
+    }
+
+    case KILLED: {
+      setMotorSpeed(0);
+      break;
+    }
+  }
+}
+
+void checkLimitSwitch() {
+  if (digitalRead(limitSwitchPin) == HIGH) {
+    Serial.println("Limit switch pressed");
+    state = KILLED;
+  }
+}
+
+void checkMagnetsInRange() {
   if (!isMagnetInRange(pendulumAngleMagIncPin, pendulumAngleMagDecPin)) {
-    killed = true;
     Serial.println("Pendulum magnet not in range");
-    return;
+    state = KILLED;
   }
 
   if (!isMagnetInRange(motorAngleMagIncPin, motorAngleMagDecPin)) {
-    killed = true;
     Serial.println("Motor magnet not in range");
-    return;
-  }
-
-  // We use the limit switch to zero the motor angle, so run that step of the
-  // configuration before using the limit switch as a kill switch.
-  if (configurationState == UNCONFIGURED) {
-    configure();
-    return;
-  }
-
-  // The motor angle has been zeroed. Now use the limit switch as a kill switch.
-  if (digitalRead(limitSwitchPin) == HIGH) {
-    killed = true;
-    Serial.println("Kill switch pressed");
-    return;
-  }
-
-  if (configurationState != CONFIGURED) {
-    configure();
-    return;
-  }
-
-  // If the cart is too close to either end of the track, kill it.
-  const double buffer = 0.1;
-  if (cartPosition < buffer || cartPosition > trackLength - cartWidth - buffer) {
-    killed = true;
-    Serial.println("Cart too close to end");
-    return;
+    state = KILLED;
   }
 }
 
@@ -216,44 +297,40 @@ bool isMagnetInRange(const uint8_t magIncPin, const uint8_t magDecPin) {
   return digitalRead(magIncPin) == HIGH && digitalRead(magDecPin) == HIGH;
 }
 
-void configure() {
-  switch (configurationState) {
-    case UNCONFIGURED:
-      if (digitalRead(limitSwitchPin) == LOW) {
-        // Move the cart until it's pressing the limit switch
-        setMotorSpeed(-10);
-      } else {
-        motorAngle = 0.0;
-
-        // Move the cart until it's not pressing the limit switch
-        while (digitalRead(limitSwitchPin) == HIGH) {
-          setMotorSpeed(10);
-          delay(100);
-        }
-
-        configurationState = ZEROED;
-      }
-      break;
-
-    case ZEROED:
-      // Move the cart to the middle of the track
-      const double target = (trackLength - cartWidth) / 2.0;
-      if (cartPosition < target) {
-        setMotorSpeed(10);
-      } else {
-        setMotorSpeed(0);
-        configurationState = CONFIGURED;
-      }
-      break;
-    
-    case CONFIGURED:
-      killed = true;
-      Serial.println("Unexpected control flow");
-      break;
-  }
-}
-
 void setMotorSpeed(const short speed) {
   digitalWrite(motorSpeedDirPin, speed < 0 ? LOW : HIGH);
   analogWrite(motorSpeedPwmPin, min(abs(speed), 10));
+}
+
+/**
+ * Computes the interval spanning a range of values and returns its size.
+ *
+ * For example, the interval size of [1.0, 3.0, 2.0] is 3.0 - 1.0 = 2.0.
+ */
+double getIntervalSize(const double *data, uint8_t length) {
+  double maximum = -INFINITY;
+  double minimum = INFINITY;
+
+  for (uint8_t i = 0; i < length; i++) {
+    double datum = data[i];
+    maximum = max(datum, maximum);
+    minimum = min(datum, minimum);
+  }
+
+  return maximum - minimum;
+}
+
+double sign(double value) {
+  return value < 0.0 ? -1.0 : 1.0;
+}
+
+bool checkCartPosition() {
+  const double buffer = 0.1;
+  if (cartPosition < buffer || cartPosition > trackLength - cartWidth - buffer) {
+    Serial.println("Cart too close to the end");
+    state = KILLED;
+    return false;
+  }
+
+  return true;
 }
