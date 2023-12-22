@@ -81,6 +81,30 @@ const double trackLength = 0.965;
 /** The width of the cart (in m). */
 const double cartWidth = 0.035;
 
+/**
+ * In order to calculate the cart's velocity we record its position over the n
+ * last iterations of the main loop and the times at which those positions were
+ * recorded. We then calculate its velocity as the difference between the newest
+ * and oldest records divided by the time between them.
+ *
+ * This complicated approach is necessary because:
+ *
+ * - we can't calculate it from the two most recent cart positions as the time
+ *   delta is too small and the velocity ends up being infinity, and
+ * - we can't calculate it in the rotary encoder interrupt as that's only called
+ *   when the angle changes, i.e. if it's stationary the velocity won't go to 0.
+ */
+double cartVelocity = 0.0;
+
+/** The number of cart positions to record. */
+const uint8_t cartVelocityMeasurementCount = 20;
+
+/** The n most recent cart positions. */
+double cartVelocityPositions[cartVelocityMeasurementCount];
+
+/** The times at which the n most recent cart positions were recorded. */
+double cartVelocityTimes[cartVelocityMeasurementCount];
+
 /** The states the system moves through during operation. */
 enum State {
   /**
@@ -168,6 +192,7 @@ double getAngleChange(const uint8_t aPin, const uint8_t bPin) {
 void loop() {
   checkLimitSwitch();
   checkMagnetsInRange();
+  updateCartVelocity();
 
   switch (state) {
     case STARTED: {
@@ -240,9 +265,9 @@ void loop() {
     }
 
     case PENDULUM_ANGLE_ZEROED: {
-      // Wait for the user to rotate the pendulum within 20° of upright (±160°
-      // or ±2.793 rad), then offset the pendulum angle such that upright is 0.0.
-      if (abs(pendulumAngle) > 2.793) {
+      // Wait for the user to rotate the pendulum within 10° of upright (±170°
+      // or ±2.967 rad), then offset the pendulum angle such that upright is 0.0.
+      if (abs(pendulumAngle) > 2.967) {
         pendulumAngle += -M_PI * sign(pendulumAngle);
         Serial.println("Running");
         state = RUNNING;
@@ -255,13 +280,15 @@ void loop() {
         break;
       }
 
+      setMotorSpeed((short) (10.0 * sin(millis() / 500.0)));
+
       Serial.print(0);
       Serial.print(" ");
-      Serial.print(M_PI);
+      Serial.print(trackLength);
       Serial.print(" ");
-      Serial.print(-M_PI);
+      Serial.print(cartPosition);
       Serial.print(" ");
-      Serial.println(pendulumAngle);
+      Serial.println(cartVelocity);
       break;
     }
 
@@ -333,4 +360,19 @@ bool checkCartPosition() {
   }
 
   return true;
+}
+
+void updateCartVelocity() {
+  const uint8_t n = cartVelocityMeasurementCount;
+  for (uint8_t i = 0; i < n - 1; i++) {
+    cartVelocityPositions[i] = cartVelocityPositions[i + 1];
+    cartVelocityTimes[i] = cartVelocityTimes[i + 1];
+  }
+
+  cartVelocityPositions[n - 1] = cartPosition;
+  cartVelocityTimes[n - 1] = micros() / 1000000.0;
+
+  const double dx = cartVelocityPositions[n - 1] - cartVelocityPositions[0];
+  const double dt = cartVelocityTimes[n - 1] - cartVelocityTimes[0];
+  cartVelocity = dx / dt;
 }
