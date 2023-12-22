@@ -89,7 +89,7 @@
   \item Solving these equations for $\ddot{\theta}$ and $\ddot{x}$ gives \[\ddot{\theta} = \frac{(m + M) g \sin \theta + F \cos \theta - m l \dot{\theta}^2 \cos \theta \sin \theta}{l (m + M) - m l \cos^2 \theta}\] and \[\ddot{x} = \frac{2 F + m g \sin 2 \theta - 2 m l \dot{\theta}^2 \sin \theta}{m + 2 M - m \cos 2 \theta}.\]
 \end{itemize}
 
-\section{Linearization, Stability, and Controllability}
+\section{Linearization, Stability, and Controllability} \label{controllability}
 
 \begin{itemize}
   \item The state vector for this system is \[\begin{pmatrix}
@@ -183,6 +183,19 @@
         \end{itemize}
 
         This gives a final equation \[\omega = A V_\text{in} (1 - e^{-B t})\] where $A, B > 0$ are constants that can be determined from experimental data.
+
+  \item Differentiating this equation with respect to time gives \[\dot{\omega} = A B V_\text{in} e^{-B t}\] which can be equated with the time-independent equation for $\dot{\omega}$ \begin{align*}
+          A B V_\text{in} e^{-B t} & = C V_\text{in} + D \omega                          \\
+                                   & = C V_\text{in} + D [A V_\text{in} (1 - e^{-B t})]  \\
+                                   & = (A D + C) V_\text{in} - A D V_\text{in} e^{-B t}.
+        \end{align*} From this we can see $A B = -A D$ or $D = - B$ and $A D + C = 0$ or $C = A B$. Once $A$ and $B$ are determined from experimental data we can determine $C$ and $D$ and thus the time-independent equation for $\dot{\omega}$.
+
+  \item The time-independent equation for $\dot{\omega}$ can be multiplied by the timing pulley radius $R$ to find the acceleration of the cart $a$ and this can be multiplied by the mass of the cart $M$ to find the force on the cart $F$. Finally, this equation can be rearranged to find the voltage $V_\text{in}$ required to exert a force $F$ on the cart when it has angular velocity $\omega$ \begin{align*}
+          \dot{\omega} & = C V_\text{in} + D \omega                             \\
+          a            & = R (C V_\text{in} + D \omega)                         \\
+          F            & = M R (C V_\text{in} + D \omega)                       \\
+          V_\text{in}  & = \frac{1}{C} \left( \frac{F}{M R} - D \omega \right).
+        \end{align*} This equation bridges the control equations of section \ref{controllability} and the motor equations of this section.
 \end{itemize}
 
 \end{document}
