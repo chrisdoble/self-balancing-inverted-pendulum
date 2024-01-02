@@ -66,20 +66,8 @@ const uint8_t motorSpeedPwmPin = 11;
  */
 const uint8_t motorSpeedDirPin = 12;
 
-/** The last measured angle of the pendulum (in rad). */
-volatile double pendulumAngle = 0.0;
-
-/** The last measured angle of the motor (in rad). */
-volatile double motorAngle = 0.0;
-
 /** The last measured distance between the cart and the limit switch (in m). */
 volatile double cartPosition = 0.0;
-
-/** The length of the track (in m). */
-const double trackLength = 0.965;
-
-/** The width of the cart (in m). */
-const double cartWidth = 0.035;
 
 /**
  * In order to calculate the cart's velocity we record its position over the n
@@ -97,13 +85,49 @@ const double cartWidth = 0.035;
 double cartVelocity = 0.0;
 
 /** The number of cart positions to record. */
-const uint8_t cartVelocityMeasurementCount = 20;
+const uint8_t velocityMeasurementCount = 20;
 
-/** The n most recent cart positions. */
-double cartVelocityPositions[cartVelocityMeasurementCount];
+/** The most recent cart positions. */
+double cartVelocityPositions[velocityMeasurementCount];
 
-/** The times at which the n most recent cart positions were recorded. */
-double cartVelocityTimes[cartVelocityMeasurementCount];
+/** The times at which the most recent cart positions were recorded. */
+double velocityTimes[velocityMeasurementCount];
+
+/** The mass of the cart (in kg). */
+const double cartMass = 0.103;
+
+/** The width of the cart (in m). */
+const double cartWidth = 0.035;
+
+/** The last measured angle of the motor (in rad). */
+volatile double motorAngle = 0.0;
+
+/** The last measured angle of the pendulum (in rad). */
+volatile double pendulumAngle = 0.0;
+
+/** See cartVelocity. */
+double pendulumAngularVelocity = 0.0;
+
+/** See cartVelocityPositions. */
+double pendulumAngularVelocityAngles[velocityMeasurementCount];
+
+/** The length of the track (in m). */
+const double trackLength = 0.96;
+
+/** The state feedback matrix K. */
+const double k[4] = {269.992, 64.3372, -100.0, -74.6742};
+
+/** The constant A in the acceleration equation a = A Vin + B v. */
+const double A = 6.78595;
+
+/** The constant B in the acceleration equation a = A Vin + B v. */
+const double B = -33.2653;
+
+/** The maximum voltage of the motor (in V). */
+const double motorVoltage = 24.0;
+
+/** The cart position that corresponds to the middle of the track. */
+const double centreOfTrack = (trackLength - cartWidth) / 2.0;
 
 /** The states the system moves through during operation. */
 enum State {
@@ -152,7 +176,7 @@ void setup() {
   pinMode(motorSpeedPwmPin, OUTPUT);
   pinMode(motorSpeedDirPin, OUTPUT);
 
-  Serial.begin(9600);
+  Serial.begin(38400);
 }
 
 void onPendulumAngleAPinChange() {
@@ -163,14 +187,14 @@ void onMotorAngleAPinChange() {
   motorAngle += getAngleChange(motorAngleAPin, motorAngleBPin);
 
   // The radius of the timing pulley on the axle of the motor (in m).
-  // Multiplying the motor angle by this value gives the distance between the
-  // timing pulley and the cart.
+  //
+  // Multiplying the motor angle by this value gives the cart position.
   const double timingPulleyRadius = 0.00965;
   cartPosition = motorAngle * timingPulleyRadius;
 }
 
 double getAngleChange(const uint8_t aPin, const uint8_t bPin) {
-  // The rotary encoders run in 9 bit mode, so a change in a A_LSU_U pin
+  // The rotary encoders run in 9 bit mode, so a change in an A_LSU_U pin
   // corresponds to a change of 0.704° or 0.0123 rad.
   const double resolution = 0.0123;
 
@@ -192,7 +216,7 @@ double getAngleChange(const uint8_t aPin, const uint8_t bPin) {
 void loop() {
   checkLimitSwitch();
   checkMagnetsInRange();
-  updateCartVelocity();
+  updateVelocities();
 
   switch (state) {
     case STARTED: {
@@ -218,8 +242,7 @@ void loop() {
 
     case MOTOR_ANGLE_ZEROED: {
       // Move the cart to the centre of the track
-      const double target = (trackLength - cartWidth) / 2.0;
-      if (cartPosition < target) {
+      if (cartPosition < (trackLength - cartWidth) / 2) {
         setMotorSpeed(10);
       } else {
         Serial.println("Cart centred");
@@ -230,7 +253,7 @@ void loop() {
     }
 
     case CART_CENTRED: {
-      // Measure the pendulum angle a number of times, 100ms apart
+      // Measure the pendulum angle several times, 100ms apart
       const uint8_t angleCount = 20;
       double angles[angleCount];
 
@@ -265,10 +288,16 @@ void loop() {
     }
 
     case PENDULUM_ANGLE_ZEROED: {
-      // Wait for the user to rotate the pendulum within 10° of upright (±170°
-      // or ±2.967 rad), then offset the pendulum angle such that upright is 0.0.
+      // Wait until the pendulum is within 10° of upright (±170° or ±2.967 rad)
       if (abs(pendulumAngle) > 2.967) {
-        pendulumAngle += -M_PI * sign(pendulumAngle);
+        // Offset the pendulum angle such that upright is 0.0
+        pendulumAngle -= M_PI * sign(pendulumAngle);
+
+        // Zero the pendulum angle measurements so its velocity is correct
+        for (uint8_t i = 0; i < velocityMeasurementCount; i++) {
+          pendulumAngularVelocityAngles[i] = 0.0;
+        }
+
         Serial.println("Running");
         state = RUNNING;
       }
@@ -276,19 +305,10 @@ void loop() {
     }
 
     case RUNNING: {
-      if (!checkCartPosition()) {
+      if (!checkCartPosition() || !checkPendulumAngle()) {
         break;
       }
 
-      setMotorSpeed((short) (10.0 * sin(millis() / 500.0)));
-
-      Serial.print(0);
-      Serial.print(" ");
-      Serial.print(trackLength);
-      Serial.print(" ");
-      Serial.print(cartPosition);
-      Serial.print(" ");
-      Serial.println(cartVelocity);
       break;
     }
 
@@ -326,7 +346,7 @@ bool isMagnetInRange(const uint8_t magIncPin, const uint8_t magDecPin) {
 
 void setMotorSpeed(const short speed) {
   digitalWrite(motorSpeedDirPin, speed < 0 ? LOW : HIGH);
-  analogWrite(motorSpeedPwmPin, min(abs(speed), 10));
+  analogWrite(motorSpeedPwmPin, min(abs(speed), 20));
 }
 
 /**
@@ -351,6 +371,7 @@ double sign(double value) {
   return value < 0.0 ? -1.0 : 1.0;
 }
 
+/** If the cart gets within 10cm of either end of the track, kill it. */
 bool checkCartPosition() {
   const double buffer = 0.1;
   if (cartPosition < buffer || cartPosition > trackLength - cartWidth - buffer) {
@@ -362,17 +383,33 @@ bool checkCartPosition() {
   return true;
 }
 
-void updateCartVelocity() {
-  const uint8_t n = cartVelocityMeasurementCount;
+/** If the pendulum is more than 20° away from verticle, kill it. */
+bool checkPendulumAngle() {
+  if (abs(pendulumAngle) > 0.349) {
+    Serial.println("Pendulum angle too great");
+    state = KILLED;
+    return false;
+  }
+
+  return true;
+}
+
+void updateVelocities() {
+  const uint8_t n = velocityMeasurementCount;
   for (uint8_t i = 0; i < n - 1; i++) {
     cartVelocityPositions[i] = cartVelocityPositions[i + 1];
-    cartVelocityTimes[i] = cartVelocityTimes[i + 1];
+    pendulumAngularVelocityAngles[i] = pendulumAngularVelocityAngles[i + 1];
+    velocityTimes[i] = velocityTimes[i + 1];
   }
 
   cartVelocityPositions[n - 1] = cartPosition;
-  cartVelocityTimes[n - 1] = micros() / 1000000.0;
+  pendulumAngularVelocityAngles[n - 1] = pendulumAngle;
+  velocityTimes[n - 1] = micros() / 1000000.0;
 
   const double dx = cartVelocityPositions[n - 1] - cartVelocityPositions[0];
-  const double dt = cartVelocityTimes[n - 1] - cartVelocityTimes[0];
+  const double dt = velocityTimes[n - 1] - velocityTimes[0];
   cartVelocity = dx / dt;
+
+  const double dtheta = pendulumAngularVelocityAngles[n - 1] - pendulumAngularVelocityAngles[0];
+  pendulumAngularVelocity = dtheta / dt;
 }
