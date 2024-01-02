@@ -182,19 +182,18 @@
           \item $B = -A V_\text{in}$ because $\omega(0) = 0$.
         \end{itemize}
 
-        This gives a final equation \[\omega = A V_\text{in} (1 - e^{-B t})\] where $A, B > 0$ are constants that can be determined from experimental data.
+        Finally, the equation can be multiplied by the radius of the timing pulley $R$ to give the velocity of the cart $v$. This gives \[v = A V_\text{in} (1 - e^{-B t})\] where $A, B > 0$ are constants that can be determined from experimental data.
 
-  \item Differentiating this equation with respect to time gives \[\dot{\omega} = A B V_\text{in} e^{-B t}\] which can be equated with the time-independent equation for $\dot{\omega}$ \begin{align*}
-          A B V_\text{in} e^{-B t} & = C V_\text{in} + D \omega                          \\
+  \item Differentiating this equation with respect to time gives \[a = A B V_\text{in} e^{-B t}\] which can be equated with the time-independent equation for $a = R \dot{\omega}$ \begin{align*}
+          A B V_\text{in} e^{-B t} & = C V_\text{in} + D v                               \\
                                    & = C V_\text{in} + D [A V_\text{in} (1 - e^{-B t})]  \\
                                    & = (A D + C) V_\text{in} - A D V_\text{in} e^{-B t}.
-        \end{align*} From this we can see $A B = -A D$ or $D = - B$ and $A D + C = 0$ or $C = A B$. Once $A$ and $B$ are determined from experimental data we can determine $C$ and $D$ and thus the time-independent equation for $\dot{\omega}$.
+        \end{align*} From this we can see $A B = -A D$ or $D = - B$ and $A D + C = 0$ or $C = A B$. Once $A$ and $B$ are determined from experimental data we can determine $C$ and $D$ and thus the time-independent equation for $a$.
 
-  \item The time-independent equation for $\dot{\omega}$ can be multiplied by the timing pulley radius $R$ to find the acceleration of the cart $a$ and this can be multiplied by the mass of the cart $M$ to find the force on the cart $F$. Finally, this equation can be rearranged to find the voltage $V_\text{in}$ required to exert a force $F$ on the cart when it has angular velocity $\omega$ \begin{align*}
-          \dot{\omega} & = C V_\text{in} + D \omega                             \\
-          a            & = R (C V_\text{in} + D \omega)                         \\
-          F            & = M R (C V_\text{in} + D \omega)                       \\
-          V_\text{in}  & = \frac{1}{C} \left( \frac{F}{M R} - D \omega \right).
+  \item The time-independent equation for $a$ can be multiplied by the mass of the cart $M$ to find the force on the cart $F$. This equation can then be rearranged to find the voltage $V_\text{in}$ required to exert a force $F$ on the cart when it has velocity $v$ \begin{align*}
+          a           & = C V_\text{in} + D v                           \\
+          F           & = M (C V_\text{in} + D v)                       \\
+          V_\text{in} & = \frac{1}{C} \left( \frac{F}{M} - D v \right).
         \end{align*} This equation bridges the control equations of section \ref{controllability} and the motor equations of this section.
 \end{itemize}
 
