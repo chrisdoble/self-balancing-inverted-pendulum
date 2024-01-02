@@ -242,7 +242,7 @@ void loop() {
 
     case MOTOR_ANGLE_ZEROED: {
       // Move the cart to the centre of the track
-      if (cartPosition < (trackLength - cartWidth) / 2) {
+      if (cartPosition < centreOfTrack) {
         setMotorSpeed(10);
       } else {
         Serial.println("Cart centred");
@@ -295,7 +295,7 @@ void loop() {
 
         // Zero the pendulum angle measurements so its velocity is correct
         for (uint8_t i = 0; i < velocityMeasurementCount; i++) {
-          pendulumAngularVelocityAngles[i] = 0.0;
+          pendulumAngularVelocityAngles[i] = pendulumAngle;
         }
 
         Serial.println("Running");
