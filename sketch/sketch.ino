@@ -1,97 +1,24 @@
-/**
- * The A_LSB_U pin from the pendulum's rotary encoder.
- *
- * Needs to be on pin 2 so we can attach an interrupt.
- */
-const uint8_t pendulumAngleAPin = 2;
+#include <BasicLinearAlgebra.h>
+#include "pins.h"
+
+using namespace BLA;
 
 /**
- * The A_LSB_U pin from the motor's rotary encoder.
- *
- * Needs to be on pin 3 so we can attach an interrupt.
+ * Mathematical constants
  */
-const uint8_t motorAngleAPin = 3;
+
+/** The constant c in the acceleration equation a = c vin + d v. */
+const double c = 4.24182;
+
+/** The constant d in the acceleration equation a = c vin + d v. */
+const double d = -21.1272;
+
+/** The state feedback matrix. */
+const Matrix<1, 4, double> k = {67.8753, 16.8168, -9.40109, -14.6775};
 
 /**
- * The B_Dir_V pin from the pendulum's rotary encoder.
- *
- * It's a quarter period shifted from the A_LSB_U pin from which we can
- * determine the direction of rotation.
+ * Physical constants
  */
-const uint8_t pendulumAngleBPin = 4;
-
-/**
- * The MagINCn pin from the pendulum's rotary encoder.
- *
- * If this is low the magnet has moved closer to the rotary encoder. If both
- * this and the MagDECn pin are low the magnet isn't in range.
- */
-const uint8_t pendulumAngleMagIncPin = 5;
-
-/**
- * The MagDECn pin from the pendulum's rotary encoder.
- *
- * If this is low the magnet has moved further from the rotary encoder. If both
- * this and the MagINCn pin are low the magnet isn't in range.
- */
-const uint8_t pendulumAngleMagDecPin = 6;
-
-/** The B_Dir_V pin from the motor's rotary encoder. */
-const uint8_t motorAngleBPin = 7;
-
-/** The MagINCn pin from the motor's rotary encoder. */
-const uint8_t motorAngleMagIncPin = 8;
-
-/** The MagDECn pin from the motor's rotary encoder. */
-const uint8_t motorAngleMagDecPin = 9;
-
-/**
- * The output pin from the limit switch.
- *
- * If this is high something has pressed the limit switch.
- */
-const uint8_t limitSwitchPin = 10;
-
-/**
- * The motor's speed pin.
- *
- * Accepts a PWM signal that controls the motor's speed.
- */
-const uint8_t motorSpeedPwmPin = 11;
-
-/**
- * The motor's direction pin.
- *
- * LOW is towards the motor, HIGH is away from it.
- */
-const uint8_t motorSpeedDirPin = 12;
-
-/** The last measured distance between the cart and the limit switch (in m). */
-volatile double cartPosition = 0.0;
-
-/**
- * In order to calculate the cart's velocity we record its position over the n
- * last iterations of the main loop and the times at which those positions were
- * recorded. We then calculate its velocity as the difference between the newest
- * and oldest records divided by the time between them.
- *
- * This complicated approach is necessary because:
- *
- * - we can't calculate it from the two most recent cart positions as the time
- *   delta is too small and the velocity ends up being infinity, and
- * - we can't calculate it in the rotary encoder interrupt as that's only called
- *   when the angle changes, i.e. if it's stationary the velocity won't go to 0.
- */
-double cartVelocity = 0.0;
-
-/** The number of cart positions to record. */
-const uint8_t velocityMeasurementCount = 20;
-
-/** The most recent cart positions. */
-double cartVelocityPositions[velocityMeasurementCount];
-
-/** The times at which the most recent cart positions were recorded. */
-double velocityTimes[velocityMeasurementCount];
 
 /** The mass of the cart (in kg). */
 const double cartMass = 0.103;
@@ -99,37 +26,65 @@ const double cartMass = 0.103;
 /** The width of the cart (in m). */
 const double cartWidth = 0.035;
 
-/** The last measured angle of the motor (in rad). */
-volatile double motorAngle = 0.0;
-
-/** The last measured angle of the pendulum (in rad). */
-volatile double pendulumAngle = 0.0;
-
-/** See cartVelocity. */
-double pendulumAngularVelocity = 0.0;
-
-/** See cartVelocityPositions. */
-double pendulumAngularVelocityAngles[velocityMeasurementCount];
+/** The maximum voltage of the motor (in V). */
+const double motorVoltage = 24.0;
 
 /** The length of the track (in m). */
 const double trackLength = 0.96;
 
-/** The state feedback matrix K. */
-const double k[4] = {269.992, 64.3372, -100.0, -74.6742};
-
-/** The constant A in the acceleration equation a = A Vin + B v. */
-const double A = 6.78595;
-
-/** The constant B in the acceleration equation a = A Vin + B v. */
-const double B = -33.2653;
-
-/** The maximum voltage of the motor (in V). */
-const double motorVoltage = 24.0;
-
 /** The cart position that corresponds to the middle of the track. */
 const double centreOfTrack = (trackLength - cartWidth) / 2.0;
 
-/** The states the system moves through during operation. */
+/**
+ * System state variables
+ */
+
+/** The last measured angle of the motor (in rad). */
+volatile double motorAngle = 0.0;
+
+/**
+ * The last measured distance between the right edge of the cart and the limit
+ * switch (in m). Derived from motorAngle.
+ */
+volatile double cartPosition = 0.0;
+
+/** The last calculated velocity of the cart (in m/s). */
+double cartVelocity = 0.0;
+
+/**
+ * The last measured angle of the pendulum (in rad).
+ *
+ * Upright is 0, clockwise rotations as viewed from the front of the system are
+ * considered positive.
+ */
+volatile double pendulumAngle = 0.0;
+
+/** The last calculated angular velocity of the pendulum (in rad/s). */
+double pendulumAngularVelocity = 0.0;
+
+/**
+ * The number of data points to collect in order to calculate the cart's
+ * velocity and the pendulum's angular velocity.
+ */
+const uint8_t velocityDataCount = 10;
+
+/**
+ * The most recent pendulum angles. Used to calculate the pendulum's angular
+ * velocity.
+ */
+Matrix<velocityDataCount, 1, double> velocityDataAngles;
+
+/** The most recent cart positions. Used to calculate the cart's velocity. */
+Matrix<velocityDataCount, 1, double> velocityDataPositions;
+
+/**
+ * The times at which the most recent cart positions and pendulum angles were
+ * recorded. Used to calculate the cart's velocity and the pendulum's angular
+ * velocity.
+ */
+double velocityDataTimes[velocityDataCount];
+
+/** The current state of the system. */
 enum State {
   /**
    * The system has just started. Move the cart until it is pressing the
@@ -227,6 +182,7 @@ void loop() {
         setMotorSpeed(-10);
       }
 
+      cartPosition = 0.0;
       motorAngle = 0.0;
 
       // Move the cart until it's not pressing the limit switch (otherwise it
@@ -288,14 +244,14 @@ void loop() {
     }
 
     case PENDULUM_ANGLE_ZEROED: {
-      // Wait until the pendulum is within 10° of upright (±170° or ±2.967 rad)
-      if (abs(pendulumAngle) > 2.967) {
+      // Wait until the pendulum is within 5° of upright (±175° or ±3.054 rad)
+      if (abs(pendulumAngle) > 3.054) {
         // Offset the pendulum angle such that upright is 0.0
-        pendulumAngle -= M_PI * sign(pendulumAngle);
+        pendulumAngle -= M_PI * (pendulumAngle < 0.0 ? -1.0 : 1.0);
 
         // Zero the pendulum angle measurements so its velocity is correct
-        for (uint8_t i = 0; i < velocityMeasurementCount; i++) {
-          pendulumAngularVelocityAngles[i] = pendulumAngle;
+        for (uint8_t i = 0; i < velocityDataCount; i++) {
+          velocityDataAngles(i, 0) = pendulumAngle;
         }
 
         Serial.println("Running");
@@ -309,11 +265,21 @@ void loop() {
         break;
       }
 
+      Matrix<4, 1, double> state = {pendulumAngle, pendulumAngularVelocity, cartPosition, cartVelocity};
+      const double f = (-k * state)(0, 0);
+      const double voltage = (f / cartMass - d * cartVelocity) / c;
+      const short speed = (short)(voltage / motorVoltage * 255.0);
+      setMotorSpeed(speed);
+
       break;
     }
 
     case KILLED: {
       setMotorSpeed(0);
+
+      // Hold here so nothing else happens
+      while (true) {}
+
       break;
     }
   }
@@ -344,9 +310,56 @@ bool isMagnetInRange(const uint8_t magIncPin, const uint8_t magDecPin) {
   return digitalRead(magIncPin) == HIGH && digitalRead(magDecPin) == HIGH;
 }
 
+/**
+ * Performs a quadratic regression over the last n data points, differentiates
+ * the result, and uses that to predict the current (angular) velocity.
+ *
+ * See https://en.wikipedia.org/wiki/Polynomial_regression#Matrix_form_and_calculation_of_estimates
+ */
+void updateVelocities() {
+  // Using the notation of the Wikipedia page above, first calculate (X^T X)^-1
+  // as it may not be invertible in which case the velocities will be wrong.
+  const uint8_t n = velocityDataCount;
+  Matrix<n, 3, double> t;
+  for (uint8_t i = 0; i < n - 1; i++) {
+    t(i, 0) = 1;
+    t(i, 1) = velocityDataTimes[i + 1];
+    t(i, 2) = pow(velocityDataTimes[i + 1], 2);
+  }
+
+  const double now = micros() / 1000000.0;
+  t(n - 1, 0) = 1;
+  t(n - 1, 1) = now;
+  t(n - 1, 2) = pow(now, 2);
+
+  Matrix<3, 3, double> t2 = ~t * t;
+  if (!Invert(t2)) {
+    // t2 isn't invertible so skip updating the velocities this iteration.
+    return;
+  }
+
+  for (uint8_t i = 0; i < n - 1; i++) {
+    velocityDataAngles(i, 0) = velocityDataAngles(i + 1, 0);
+    velocityDataPositions(i, 0) = velocityDataPositions(i + 1, 0);
+    velocityDataTimes[i] = velocityDataTimes[i + 1];
+  }
+
+  velocityDataAngles(n - 1, 0) = pendulumAngle;
+  velocityDataPositions(n - 1, 0) = cartPosition;
+  velocityDataTimes[n - 1] = now;
+
+  // Cart velocity
+  Matrix<3, 1, double> positionCoefficients = t2 * ~t * velocityDataPositions;
+  cartVelocity = positionCoefficients(1, 0) + 2 * positionCoefficients(2, 0) * now;
+
+  // Pendulum angular velocity
+  Matrix<3, 1, double> angleCoefficients = t2 * ~t * velocityDataAngles;
+  pendulumAngularVelocity = angleCoefficients(1, 0) + 2 * angleCoefficients(2, 0) * now;
+}
+
 void setMotorSpeed(const short speed) {
   digitalWrite(motorSpeedDirPin, speed < 0 ? LOW : HIGH);
-  analogWrite(motorSpeedPwmPin, min(abs(speed), 20));
+  analogWrite(motorSpeedPwmPin, min(abs(speed), 50));
 }
 
 /**
@@ -367,10 +380,6 @@ double getIntervalSize(const double *data, uint8_t length) {
   return maximum - minimum;
 }
 
-double sign(double value) {
-  return value < 0.0 ? -1.0 : 1.0;
-}
-
 /** If the cart gets within 10cm of either end of the track, kill it. */
 bool checkCartPosition() {
   const double buffer = 0.1;
@@ -383,33 +392,13 @@ bool checkCartPosition() {
   return true;
 }
 
-/** If the pendulum is more than 20° away from verticle, kill it. */
+/** If the pendulum is more than 30° away from verticle, kill it. */
 bool checkPendulumAngle() {
-  if (abs(pendulumAngle) > 0.349) {
+  if (abs(pendulumAngle) > 0.524) {
     Serial.println("Pendulum angle too great");
     state = KILLED;
     return false;
   }
 
   return true;
-}
-
-void updateVelocities() {
-  const uint8_t n = velocityMeasurementCount;
-  for (uint8_t i = 0; i < n - 1; i++) {
-    cartVelocityPositions[i] = cartVelocityPositions[i + 1];
-    pendulumAngularVelocityAngles[i] = pendulumAngularVelocityAngles[i + 1];
-    velocityTimes[i] = velocityTimes[i + 1];
-  }
-
-  cartVelocityPositions[n - 1] = cartPosition;
-  pendulumAngularVelocityAngles[n - 1] = pendulumAngle;
-  velocityTimes[n - 1] = micros() / 1000000.0;
-
-  const double dx = cartVelocityPositions[n - 1] - cartVelocityPositions[0];
-  const double dt = velocityTimes[n - 1] - velocityTimes[0];
-  cartVelocity = dx / dt;
-
-  const double dtheta = pendulumAngularVelocityAngles[n - 1] - pendulumAngularVelocityAngles[0];
-  pendulumAngularVelocity = dtheta / dt;
 }

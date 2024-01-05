@@ -1,4 +1,5 @@
 .DS_Store
+.vscode
 *.aux
 *.fdb_latexmk
 *.fls
@@ -6,3 +7,4 @@
 *.out
 *.synctex.gz
 *.toc
+
