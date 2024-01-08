@@ -131,7 +131,7 @@ void setup() {
   pinMode(motorSpeedPwmPin, OUTPUT);
   pinMode(motorSpeedDirPin, OUTPUT);
 
-  Serial.begin(38400);
+  Serial.begin(115200);
 }
 
 void onPendulumAngleAPinChange() {
@@ -317,27 +317,7 @@ bool isMagnetInRange(const uint8_t magIncPin, const uint8_t magDecPin) {
  * See https://en.wikipedia.org/wiki/Polynomial_regression#Matrix_form_and_calculation_of_estimates
  */
 void updateVelocities() {
-  // Using the notation of the Wikipedia page above, first calculate (X^T X)^-1
-  // as it may not be invertible in which case the velocities will be wrong.
   const uint8_t n = velocityDataCount;
-  Matrix<n, 3, double> t;
-  for (uint8_t i = 0; i < n - 1; i++) {
-    t(i, 0) = 1;
-    t(i, 1) = velocityDataTimes[i + 1];
-    t(i, 2) = pow(velocityDataTimes[i + 1], 2);
-  }
-
-  const double now = micros() / 1000000.0;
-  t(n - 1, 0) = 1;
-  t(n - 1, 1) = now;
-  t(n - 1, 2) = pow(now, 2);
-
-  Matrix<3, 3, double> t2 = ~t * t;
-  if (!Invert(t2)) {
-    // t2 isn't invertible so skip updating the velocities this iteration.
-    return;
-  }
-
   for (uint8_t i = 0; i < n - 1; i++) {
     velocityDataAngles(i, 0) = velocityDataAngles(i + 1, 0);
     velocityDataPositions(i, 0) = velocityDataPositions(i + 1, 0);
@@ -346,15 +326,35 @@ void updateVelocities() {
 
   velocityDataAngles(n - 1, 0) = pendulumAngle;
   velocityDataPositions(n - 1, 0) = cartPosition;
+  const double now = micros() / 1000000.0;
   velocityDataTimes[n - 1] = now;
 
+  // Using the notation of the Wikipedia page above, first calculate (X^T X)^-1
+  // with X shifted such that the most recent data point is at t = 0. The matrix
+  // may not be invertible in which case we skip updating the velocities.
+  Matrix<n, 3, double> t;
+  for (uint8_t i = 0; i < n; i++) {
+    t(i, 0) = 1;
+    t(i, 1) = velocityDataTimes[i] - now;
+    t(i, 2) = pow(velocityDataTimes[i] - now, 2);
+  }
+
+  Matrix<3, 3, double> t2 = ~t * t;
+  if (!Invert(t2)) {
+    return;
+  }
+
   // Cart velocity
+  //
+  // The quadratic regression is β11 + β21 t + β31 t^2, the derivative of which
+  // is β21 + 2 β31 t, but we've shifted the data such that the most recent data
+  // point is at t = 0 and thus the velocity estimate is given by β21.
   Matrix<3, 1, double> positionCoefficients = t2 * ~t * velocityDataPositions;
-  cartVelocity = positionCoefficients(1, 0) + 2 * positionCoefficients(2, 0) * now;
+  cartVelocity = positionCoefficients(1, 0);
 
   // Pendulum angular velocity
   Matrix<3, 1, double> angleCoefficients = t2 * ~t * velocityDataAngles;
-  pendulumAngularVelocity = angleCoefficients(1, 0) + 2 * angleCoefficients(2, 0) * now;
+  pendulumAngularVelocity = angleCoefficients(1, 0);
 }
 
 void setMotorSpeed(const short speed) {
