@@ -1,20 +1,17 @@
-#include <BasicLinearAlgebra.h>
 #include "pins.h"
-
-using namespace BLA;
 
 /**
  * Mathematical constants
  */
 
 /** The constant c in the acceleration equation a = c vin + d v. */
-const double c = 4.24182;
+const double c = 6.50454;
 
 /** The constant d in the acceleration equation a = c vin + d v. */
-const double d = -21.1272;
+const double d = -33.0202;
 
 /** The state feedback matrix. */
-const Matrix<1, 4, double> k = {67.8753, 16.8168, -9.40109, -14.6775};
+const double k[] = {71.1851, 17.6506, -9.87532, -15.4159};
 
 /**
  * Physical constants
@@ -72,10 +69,10 @@ const uint8_t velocityDataCount = 10;
  * The most recent pendulum angles. Used to calculate the pendulum's angular
  * velocity.
  */
-Matrix<velocityDataCount, 1, double> velocityDataAngles;
+double velocityDataAngles[velocityDataCount];
 
 /** The most recent cart positions. Used to calculate the cart's velocity. */
-Matrix<velocityDataCount, 1, double> velocityDataPositions;
+double velocityDataPositions[velocityDataCount];
 
 /**
  * The times at which the most recent cart positions and pendulum angles were
@@ -113,33 +110,26 @@ enum State {
 } state = STARTED;
 
 void setup() {
-  // Delay 50ms to let the rotary encoders wake up
-  delay(50);
+  attachInterrupt(digitalPinToInterrupt(motorAngleAPin), onMotorAngleAPinChange, RISING);
+  attachInterrupt(digitalPinToInterrupt(pendulumAngleAPin), onPendulumAngleAPinChange, RISING);
 
-  attachInterrupt(digitalPinToInterrupt(pendulumAngleAPin), onPendulumAngleAPinChange, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(motorAngleAPin), onMotorAngleAPinChange, CHANGE);
-
-  pinMode(pendulumAngleAPin, INPUT);
   pinMode(motorAngleAPin, INPUT);
-  pinMode(pendulumAngleBPin, INPUT);
-  pinMode(pendulumAngleMagIncPin, INPUT);
-  pinMode(pendulumAngleMagDecPin, INPUT);
+  pinMode(pendulumAngleAPin, INPUT);
   pinMode(motorAngleBPin, INPUT);
-  pinMode(motorAngleMagIncPin, INPUT);
-  pinMode(motorAngleMagDecPin, INPUT);
+  pinMode(pendulumAngleBPin, INPUT);
   pinMode(limitSwitchPin, INPUT);
-  pinMode(motorSpeedPwmPin, OUTPUT);
   pinMode(motorSpeedDirPin, OUTPUT);
+  pinMode(motorSpeedPwmPin, OUTPUT);
 
   Serial.begin(115200);
 }
 
 void onPendulumAngleAPinChange() {
-  pendulumAngle += getAngleChange(pendulumAngleAPin, pendulumAngleBPin);
+  pendulumAngle += getAngleChange(pendulumAngleBPin);
 }
 
 void onMotorAngleAPinChange() {
-  motorAngle += getAngleChange(motorAngleAPin, motorAngleBPin);
+  motorAngle += getAngleChange(motorAngleBPin);
 
   // The radius of the timing pulley on the axle of the motor (in m).
   //
@@ -148,29 +138,17 @@ void onMotorAngleAPinChange() {
   cartPosition = motorAngle * timingPulleyRadius;
 }
 
-double getAngleChange(const uint8_t aPin, const uint8_t bPin) {
-  // The rotary encoders run in 9 bit mode, so a change in an A_LSU_U pin
-  // corresponds to a change of 0.704° or 0.0123 rad.
-  const double resolution = 0.0123;
-
-  if (digitalRead(aPin) == HIGH) {
-    if (digitalRead(bPin) == HIGH) {
-      return -resolution;
-    } else {
-      return resolution;
-    }
-  } else {
-    if (digitalRead(bPin) == HIGH) {
-      return resolution;
-    } else {
-      return -resolution;
-    }
-  }
+double getAngleChange(const uint8_t bPin) {
+  // The maximum resolution of the rotary encoder is 2π / (2,048 * 4) but that
+  // generates too many interrupts at high speeds and starves the main loop.
+  // I've reduced its PPM to 1,024 and only observe the rising A channel which
+  // results in the following effective resolution.
+  const double resolution = 2 * M_PI / 1024;
+  return digitalRead(bPin) == HIGH ? -resolution : resolution;
 }
 
 void loop() {
   checkLimitSwitch();
-  checkMagnetsInRange();
   updateVelocities();
 
   switch (state) {
@@ -251,7 +229,7 @@ void loop() {
 
         // Zero the pendulum angle measurements so its velocity is correct
         for (uint8_t i = 0; i < velocityDataCount; i++) {
-          velocityDataAngles(i, 0) = pendulumAngle;
+          velocityDataAngles[i] = pendulumAngle;
         }
 
         Serial.println("Running");
@@ -265,8 +243,7 @@ void loop() {
         break;
       }
 
-      Matrix<4, 1, double> state = {pendulumAngle, pendulumAngularVelocity, cartPosition, cartVelocity};
-      const double f = (-k * state)(0, 0);
+      const double f = -(k[0] * pendulumAngle + k[1] * pendulumAngularVelocity + k[2] * cartPosition + k[3] * cartVelocity);
       const double voltage = (f / cartMass - d * cartVelocity) / c;
       const short speed = (short)(voltage / motorVoltage * 255.0);
       setMotorSpeed(speed);
@@ -286,28 +263,10 @@ void loop() {
 }
 
 void checkLimitSwitch() {
-  if (digitalRead(limitSwitchPin) == HIGH) {
+  if (digitalRead(limitSwitchPin) == HIGH && state != KILLED) {
     Serial.println("Limit switch pressed");
     state = KILLED;
   }
-}
-
-void checkMagnetsInRange() {
-  if (!isMagnetInRange(pendulumAngleMagIncPin, pendulumAngleMagDecPin)) {
-    Serial.println("Pendulum magnet not in range");
-    state = KILLED;
-  }
-
-  if (!isMagnetInRange(motorAngleMagIncPin, motorAngleMagDecPin)) {
-    Serial.println("Motor magnet not in range");
-    state = KILLED;
-  }
-}
-
-bool isMagnetInRange(const uint8_t magIncPin, const uint8_t magDecPin) {
-  // If the magnet is in range both MagINCn and MagDECn are turned off. As they
-  // are open drain and there's a pull up resistor we'll see the pins as high.
-  return digitalRead(magIncPin) == HIGH && digitalRead(magDecPin) == HIGH;
 }
 
 /**
@@ -319,47 +278,24 @@ bool isMagnetInRange(const uint8_t magIncPin, const uint8_t magDecPin) {
 void updateVelocities() {
   const uint8_t n = velocityDataCount;
   for (uint8_t i = 0; i < n - 1; i++) {
-    velocityDataAngles(i, 0) = velocityDataAngles(i + 1, 0);
-    velocityDataPositions(i, 0) = velocityDataPositions(i + 1, 0);
+    velocityDataAngles[i] = velocityDataAngles[i + 1];
+    velocityDataPositions[i] = velocityDataPositions[i + 1];
     velocityDataTimes[i] = velocityDataTimes[i + 1];
   }
 
-  velocityDataAngles(n - 1, 0) = pendulumAngle;
-  velocityDataPositions(n - 1, 0) = cartPosition;
-  const double now = micros() / 1000000.0;
-  velocityDataTimes[n - 1] = now;
+  velocityDataAngles[n - 1] = pendulumAngle;
+  velocityDataPositions[n - 1] = cartPosition;
+  velocityDataTimes[n - 1] = micros() / 1000000.0;
 
-  // Using the notation of the Wikipedia page above, first calculate (X^T X)^-1
-  // with X shifted such that the most recent data point is at t = 0. The matrix
-  // may not be invertible in which case we skip updating the velocities.
-  Matrix<n, 3, double> t;
-  for (uint8_t i = 0; i < n; i++) {
-    t(i, 0) = 1;
-    t(i, 1) = velocityDataTimes[i] - now;
-    t(i, 2) = pow(velocityDataTimes[i] - now, 2);
-  }
-
-  Matrix<3, 3, double> t2 = ~t * t;
-  if (!Invert(t2)) {
-    return;
-  }
-
-  // Cart velocity
-  //
-  // The quadratic regression is β11 + β21 t + β31 t^2, the derivative of which
-  // is β21 + 2 β31 t, but we've shifted the data such that the most recent data
-  // point is at t = 0 and thus the velocity estimate is given by β21.
-  Matrix<3, 1, double> positionCoefficients = t2 * ~t * velocityDataPositions;
-  cartVelocity = positionCoefficients(1, 0);
-
-  // Pendulum angular velocity
-  Matrix<3, 1, double> angleCoefficients = t2 * ~t * velocityDataAngles;
-  pendulumAngularVelocity = angleCoefficients(1, 0);
+  // Use a backward finite difference to calculate the current velocities
+  const double dt = velocityDataTimes[n - 1] - velocityDataTimes[0];
+  cartVelocity = (velocityDataPositions[n - 1] - velocityDataPositions[0]) / dt;
+  pendulumAngularVelocity = (velocityDataAngles[n - 1] - velocityDataAngles[0]) / dt;
 }
 
 void setMotorSpeed(const short speed) {
   digitalWrite(motorSpeedDirPin, speed < 0 ? LOW : HIGH);
-  analogWrite(motorSpeedPwmPin, min(abs(speed), 50));
+  analogWrite(motorSpeedPwmPin, min(abs(speed), 110));
 }
 
 /**
@@ -392,9 +328,9 @@ bool checkCartPosition() {
   return true;
 }
 
-/** If the pendulum is more than 30° away from verticle, kill it. */
+/** If the pendulum is more than 90° away from verticle, kill it. */
 bool checkPendulumAngle() {
-  if (abs(pendulumAngle) > 0.524) {
+  if (abs(pendulumAngle) > M_PI / 2) {
     Serial.println("Pendulum angle too great");
     state = KILLED;
     return false;
