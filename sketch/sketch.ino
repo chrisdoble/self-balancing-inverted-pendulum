@@ -26,6 +26,13 @@ const double cartWidth = 0.035;
 /** The maximum voltage of the motor (in V). */
 const double motorVoltage = 24.0;
 
+/**
+ * The radius of the timing pulley on the axle of the motor (in m).
+ *
+ * Multiplying the motor angle by this value gives the cart position.
+ */
+const double timingPulleyRadius = 0.00965;
+
 /** The length of the track (in m). */
 const double trackLength = 0.96;
 
@@ -130,11 +137,6 @@ void onPendulumAngleAPinChange() {
 
 void onMotorAngleAPinChange() {
   motorAngle += getAngleChange(motorAngleAPin, motorAngleBPin);
-
-  // The radius of the timing pulley on the axle of the motor (in m).
-  //
-  // Multiplying the motor angle by this value gives the cart position.
-  const double timingPulleyRadius = 0.00965;
   cartPosition = motorAngle * timingPulleyRadius;
 }
 
@@ -145,8 +147,8 @@ double getAngleChange(const uint8_t aPin, const uint8_t bPin) {
   // channel which results in the following effective resolution.
   const double resolution = 2 * M_PI / (512 * 2);
   return digitalRead(aPin) == HIGH
-    ? digitalRead(bPin) == HIGH ? -resolution : resolution
-    : digitalRead(bPin) == HIGH ? resolution : -resolution;
+    ? digitalRead(bPin) == HIGH ? resolution : -resolution
+    : digitalRead(bPin) == HIGH ? -resolution : resolution;
 }
 
 void loop() {
@@ -159,16 +161,16 @@ void loop() {
       // the case statement because the limit switch normally acts as a kill
       // switch and we temporarily want to disable that behaviour.
       while (digitalRead(limitSwitchPin) == LOW) {
-        setMotorSpeed(-10);
+        setMotorSpeed(10);
       }
 
-      cartPosition = 0.0;
-      motorAngle = 0.0;
+      cartPosition = trackLength - cartWidth;
+      motorAngle = cartPosition / timingPulleyRadius;
 
       // Move the cart until it's not pressing the limit switch (otherwise it
       // will kill the system once we move to the next state).
       while (digitalRead(limitSwitchPin) == HIGH) {
-        setMotorSpeed(10);
+        setMotorSpeed(-10);
       }
 
       Serial.println("Motor angle zeroed");
@@ -178,8 +180,8 @@ void loop() {
 
     case MOTOR_ANGLE_ZEROED: {
       // Move the cart to the centre of the track
-      if (cartPosition < centreOfTrack) {
-        setMotorSpeed(10);
+      if (cartPosition > centreOfTrack) {
+        setMotorSpeed(-10);
       } else {
         Serial.println("Cart centred");
         setMotorSpeed(0);
@@ -296,8 +298,8 @@ void updateVelocities() {
 }
 
 void setMotorSpeed(const short speed) {
-  digitalWrite(motorSpeedDirPin, speed < 0 ? LOW : HIGH);
-  analogWrite(motorSpeedPwmPin, min(abs(speed), 80));
+  digitalWrite(motorSpeedDirPin, speed < 0 ? HIGH : LOW);
+  analogWrite(motorSpeedPwmPin, min(abs(speed), 30));
 }
 
 /**
