@@ -110,8 +110,8 @@ enum State {
 } state = STARTED;
 
 void setup() {
-  attachInterrupt(digitalPinToInterrupt(motorAngleAPin), onMotorAngleAPinChange, RISING);
-  attachInterrupt(digitalPinToInterrupt(pendulumAngleAPin), onPendulumAngleAPinChange, RISING);
+  attachInterrupt(digitalPinToInterrupt(motorAngleAPin), onMotorAngleAPinChange, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(pendulumAngleAPin), onPendulumAngleAPinChange, CHANGE);
 
   pinMode(motorAngleAPin, INPUT);
   pinMode(pendulumAngleAPin, INPUT);
@@ -125,11 +125,11 @@ void setup() {
 }
 
 void onPendulumAngleAPinChange() {
-  pendulumAngle += getAngleChange(pendulumAngleBPin);
+  pendulumAngle += getAngleChange(pendulumAngleAPin, pendulumAngleBPin);
 }
 
 void onMotorAngleAPinChange() {
-  motorAngle += getAngleChange(motorAngleBPin);
+  motorAngle += getAngleChange(motorAngleAPin, motorAngleBPin);
 
   // The radius of the timing pulley on the axle of the motor (in m).
   //
@@ -138,13 +138,15 @@ void onMotorAngleAPinChange() {
   cartPosition = motorAngle * timingPulleyRadius;
 }
 
-double getAngleChange(const uint8_t bPin) {
+double getAngleChange(const uint8_t aPin, const uint8_t bPin) {
   // The maximum resolution of the rotary encoder is 2π / (2,048 * 4) but that
   // generates too many interrupts at high speeds and starves the main loop.
-  // I've reduced its PPM to 1,024 and only observe the rising A channel which
-  // results in the following effective resolution.
-  const double resolution = 2 * M_PI / 1024;
-  return digitalRead(bPin) == HIGH ? -resolution : resolution;
+  // I've reduced its PPM to 512 and observe both rises and falls of the A
+  // channel which results in the following effective resolution.
+  const double resolution = 2 * M_PI / (512 * 2);
+  return digitalRead(aPin) == HIGH
+    ? digitalRead(bPin) == HIGH ? -resolution : resolution
+    : digitalRead(bPin) == HIGH ? resolution : -resolution;
 }
 
 void loop() {
@@ -243,9 +245,9 @@ void loop() {
         break;
       }
 
-      const double f = -(k[0] * pendulumAngle + k[1] * pendulumAngularVelocity + k[2] * cartPosition + k[3] * cartVelocity);
+      const double f = -(k[0] * pendulumAngle + k[1] * pendulumAngularVelocity + k[2] * (cartPosition - centreOfTrack) + k[3] * cartVelocity);
       const double voltage = (f / cartMass - d * cartVelocity) / c;
-      const short speed = (short)(voltage / motorVoltage * 255.0);
+      const short speed = (short)(voltage / motorVoltage * 255.0 + 1);
       setMotorSpeed(speed);
 
       break;
@@ -295,7 +297,7 @@ void updateVelocities() {
 
 void setMotorSpeed(const short speed) {
   digitalWrite(motorSpeedDirPin, speed < 0 ? LOW : HIGH);
-  analogWrite(motorSpeedPwmPin, min(abs(speed), 110));
+  analogWrite(motorSpeedPwmPin, min(abs(speed), 80));
 }
 
 /**
