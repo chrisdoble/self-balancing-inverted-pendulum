@@ -19,13 +19,13 @@
 
 \section{Introduction}
 
-I recently built this self-balancing inverted pendulum on a cart. If you’ve ever tried to balance a broom on your hand you’ll know it’s tricky to keep it upright like this. Gravity is constantly pulling it down, so if it’s not perfectly vertical it’ll start to fall. The same thing is happening to the pendulum but — in the same way you would move your hand under a broom — the cart moves left and right to keep it upright.
+I recently built this self-balancing inverted pendulum on a cart. If you've ever tried to keep something like a broom or a stick upright on your hand you'll know it's quite tricky! Gravity is constantly pulling it down, so if it’s not perfectly vertical it’ll start to fall. The same thing happens to the pendulum but the cart's programmed to move left and right in a way that keeps it upright.
 
-In this video I’ll explain how I built this, starting with the math and physics, followed by the physical construction and code.
+In this video I’ll explain how I built this, starting with the math and physics, and then the physical construction and code. The math will make the most sense if you're familiar with calculus and a little linear algebra but if not, don't worry, you should still be able to follow along.
 
 \section{Equations of Motion}
 
-If we want to control this system we need to know how it behaves without any external input, so let’s derive its equations of motion. First, let's define our coordinate system and quantities in a diagram:
+If we want to control this system we first need to know how it behaves without any external forces, so let’s derive its equations of motion. First we need to define our coordinate system and variables in a diagram:
 
 \begin{figure}[h]
   \centering
@@ -49,42 +49,45 @@ If we want to control this system we need to know how it behaves without any ext
     \draw (1, 2.8) arc (90:117:1);
     \node at (0.8, 2.5) {$\theta$};
 
-    % F
-    \draw[->,thick] (2, 0.5) -- (3, 0.5) node[right] {$F$};
-
     % Axes
-    \draw[->] (4, 0.5) -- (5, 0.5) node[right] {$x$};
-    \draw[->] (4, 0.5) -- (4, 1.5) node[above] {$y$};
+\draw[->] (3, 0.5) -- (4, 0.5) node[right] {$x$};
+\draw[->] (3, 0.5) -- (3, 1.5) node[above] {$y$};
   \end{tikzpicture}
 \end{figure}
 
-You can see we have a rectangular cart of mass $m_1$ and it's a distance $x$ along the $x$-axis from some origin point. The cart is connected to a circular simple pendulum of length $l$ and mass $m_2$ which is at an angle $\theta$ from vertical.
+We have a cart of mass $m_1$ that can only move along the $x$-axis and its position $x$ is measured from some origin point. The cart is connected to a simple pendulum of length $l$ and mass $m_2$ which is at an angle $\theta$ from vertical.
 
-With that out of the way, now we can determine the Lagrangian of the system. The Lagrangian is defined as the difference between the kinetic and potential energies of the system: $\mathcal{L} = T - U$. What are those energies?
+With that out of the way, now we can determine the Lagrangian of the system which is defined as the difference between its kinetic and potential energies: $\mathcal{L} = T - U$. Well, what are those energies?
 
-Starting with the cart, it's constrained to the $x$-axis so its velocity has no $y$ component and its kinetic energy is \[T_\text{cart} = \frac{1}{2} m_1 \dot{x}^2.\] Its potential energy can't change so we might as well set it to $0$ \[U_\text{cart} = 0.\]
+Starting with the cart, because it can only move along the $x$-axis its velocity has no $y$ component and its kinetic energy is simply \[T_\text{cart} = \frac{1}{2} m_1 \dot{x}^2.\] Its potential energy can't change so we might as well set it to $0$ \[U_\text{cart} = 0.\]
 
-Next, the pendulum. It's $x$ and $y$ coordinates are \begin{align*}
+Next, the pendulum. If we measure its position from the same origin as the cart, you can see its $x$ coordinate changes as cart moves, and both of its coordinates change as it rotates. This means its coordinates are \begin{align*}
   X & = x - l \sin \theta \\
   Y & = l \cos \theta.
-\end{align*} We can differentiate these with respect to time to get the $x$ and $y$ components of its velocity \begin{align*}
+\end{align*} Differentiating these equations with respect to time gives the $x$ and $y$ components of the pendulum's velocity \begin{align*}
   \dot{X} & = \dot{x} - l \dot{\theta} \cos \theta \\
   \dot{Y} & = -l \dot{\theta} \sin \theta.
-\end{align*} This gives it a kinetic energy of \begin{align*}
-  T_\text{pendulum} & = \frac{1}{2} m_2 V^2                                                                          \\
-                    & = \frac{1}{2} m_2 (\dot{X}^2 + \dot{Y}^2)                                                      \\
-                    & = \frac{1}{2} m_2 [(\dot{x} - l \dot{\theta} \cos \theta)^2 + (-l \dot{\theta} \sin \theta)^2] \\
+\end{align*} Using the Pythagorean theorem we can combine these to find the magnitude of the pendulum's velocity \begin{align*}
+  V^2 & = \dot{X}^2 + \dot{Y}^2                                                      \\
+      & = (\dot{x} - l \dot{\theta} \cos \theta)^2 + (-l \dot{\theta} \sin \theta)^2 \\
+      & = \dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2
+\end{align*}
+and we can use this to find its kinetic energy \begin{align*}
+T_\text{pendulum} & = \frac{1}{2} m_2 V^2                                                                          \\
                     & = \frac{1}{2} m_2 (\dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2).
-\end{align*} Unlike the cart, the pendulum's potential energy can change — as it rotates it moves up and down so its gravitational potential energy changes. If we say its potential energy is $0$ when it's $\ang{90}$ from vertical, then \[U_\text{pendulum} = m_2 g l \cos \theta.\]
+\end{align*} Unlike the cart, the pendulum's potential energy can change — as we saw, when it rotates it moves up and down so its gravitational potential energy changes. If we say its potential energy is $0$ when its $y$ coordinate is $0$, then we can define its potential energy to be \begin{align*}
+  U_\text{pendulum} & = m_2 g y              \\
+                    & = m_2 g l \cos \theta.
+\end{align*}
 
-Combining those energies gives a Lagrangian of \begin{align*}
+Combining all of those energies gives a Lagrangian of \begin{align*}
   \mathcal{L} & = T - U                                                                                                                                     \\
               & = T_\text{cart} + T_\text{pendulum} - U_\text{cart} - U_\text{pendulum}                                                                     \\
               & = \frac{1}{2} m_1 \dot{x}^2 + \frac{1}{2} m_2 (\dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2) - m_2 g l \cos \theta \\
               & = \frac{1}{2} (m_1 + m_2) \dot{x}^2 + \frac{1}{2} m_2 (l^2 \dot{\theta}^2 - 2 l \dot{\theta} \dot{x} \cos \theta) - m_2 g l \cos \theta.
 \end{align*}
 
-Now that we have the Lagrangian we can apply the Euler-Lagrange equation for the system's two coordinates $\theta$ and $x$. For $\theta$ we get \begin{align*}
+Now that we have the Lagrangian we can apply the Euler-Lagrange equation to each of the system's two coordinates $\theta$ and $x$. For $\theta$ we get \begin{align*}
   0 & = \frac{d}{d t} \frac{\partial \mathcal{L}}{\partial \dot{\theta}} - \frac{\partial \mathcal{L}}{\partial \theta}                 \\
     & = \frac{d}{d t} (m_2 l^2 \dot{\theta} - m_2 l \dot{x} \cos \theta) - m_2 l \dot{\theta} \dot{x} \sin \theta - m_2 g l \sin \theta \\
     & = l \ddot{\theta} - \ddot{x} \cos \theta - g \sin \theta
@@ -97,8 +100,8 @@ Now that we have the Lagrangian we can apply the Euler-Lagrange equation for the
   \ddot{x}      & = \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}.
 \end{align*}
 
-Now that we've got the equations of motion how do we know they're correct? One way is to solve them numerically and plot the solutions. This is a Mathematica notebook I created to do just that. You can see we define some constants like gravity, the length of the pendulum, etc. We define the initial conditions for the simulation — here the pendulum is starting $\ang{10}$ from vertical. We solve the equations of motion numerically, and we generate an animation of the solution which you can see if I evaluate the notebook.
+Now that we've got our equations of motion how do we know they're correct? One way would be to solve them and see what they predict in different scenarios. I certainly don't know how to solve these analytically, but we can solve them numerically. This is a Mathematica notebook I created to do just that. You can see we define some constants like gravity, the length of the pendulum, etc. We define the initial conditions for the simulation — here the pendulum is starting $\ang{30}$ from vertical. We solve the equations of motion numerically, and we generate an animation of the solution which you can see if I evaluate the notebook.
 
-The pendulum swings back and forth as we expect, but interestingly it also causes the cart to move back and forth. This model doesn't include air resistance or friction so it will continue forever, but we can tweak the initial conditions and see how that affects the animation. Let's make the initial angle $\ang{90}$. The cart still swings back and forth but the period seems to be shorter.
+The pendulum swings back and forth as we expect, but interestingly it also causes the cart to move back and forth. This model doesn't include air resistance or friction so it will continue forever, but we can tweak the variables and see how that affects the animation. Let's make the cart much heavier. It still moves back and forth, but much less than before.
 
 \end{document}
