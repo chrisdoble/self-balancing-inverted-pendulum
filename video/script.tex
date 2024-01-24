@@ -15,6 +15,7 @@
 }
 
 \renewcommand{\vec}[1]{\boldsymbol{\mathbf{#1}}}
+\newcommand{\dvec}[1]{\dot{\vec{#1}}}
 
 \begin{document}
 
@@ -111,22 +112,76 @@ The pendulum swings back and forth as we expect, but interestingly it also cause
 
 These equations look good, but they're quite complicated so it might be difficult to analyse the stability of the system and determine how to control it. Can we simplify them at all? Well, one approach is to linearise them.
 
-Linearising a function means finding a linear approximation of it at a particular point. For example, if we graph a function $y = f(x)$ and we want to linearise it at $x = 1$, we evaluate it at the point to find its $y$ coordinate, and we evaluate its derivative at the point to find its slope. Using this information we can plot a new function that passes through the original point and extends its slope in both directions. It's a line. If you zoom in enough the line does a pretty good job of approximating the function. As you move away it doesn't do as good of a job, but if you only care about the area around the point that's fine.
+Linearising a function means finding a linear approximation of it at a particular point. For example, if we graph a function $y = f(x)$ and we want to linearise it at $x = 1$, we evaluate it at the point to find its $y$ coordinate, and we evaluate its derivative at the point to find its slope. Using this information we can plot a new function that passes through the point and extends its slope in both directions. It's a line. If you zoom in the line does a pretty good job of approximating the function. As you move away it doesn't do as good of a job, but if you only care about the area around the point that's fine.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{linearisation1}
+\includegraphics[width=\textwidth]{linearisation}
 \end{figure}
 
-This works in three dimensions too. If we graph another function $z = g(x, y)$ and we want to linearise it at a point, again we evaluate it at the point to find its $z$ coordinate, we evaluate its derivative with respect to $x$ at the point to find its slope in the $x$ direction, and we evaluate its derivative with respect to $y$ at the point to find its slope in the $y$ direction. Using this information we can plot a new function that passes through the original point and extends the slopes in both the $x$ and $y$ directions. It's a plane. Like before, it approximates the function best when you're close to the point and gets worse as you move away.
+In the case of the pendulum, our goal is to keep the cart in the middle of the track, the pendulum upright, and neither of them moving. In other words, we want all four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ to be $0$. The further they are from $0$ the less likely it is we'll be able to recover and we might have to accept that the pendulum's going to fall over. It sounds like we can tolerate the approximation error and linearisation might work for us!
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{linearisation2}
-\end{figure}
+So how do we linearise our equations of motion? First, let's rewrite them in vector form. We'll combine our two real-valued functions into one vector-valued function \[\begin{bmatrix}
+    \ddot{\theta} \\
+    \ddot{x}
+  \end{bmatrix} = \vec{f}(\theta, \dot{\theta}) = \begin{bmatrix}
+    \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
+    \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
+  \end{bmatrix}.\] Let's also introduce the state vector $\vec{x}$ which can be used to describe the state of the system and contains the four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ \[\vec{x} = \begin{bmatrix}
+    \theta       \\
+    \dot{\theta} \\
+    x            \\
+    \dot{x}
+  \end{bmatrix}.\] Now we can change our function to accept a single variable $\vec{x}$ \[\begin{bmatrix}
+    \ddot{\theta} \\
+    \ddot{x}
+  \end{bmatrix} = \vec{f}(\vec{x}) = \begin{bmatrix}
+    \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
+    \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
+  \end{bmatrix}\] and if we include $\dot{\theta}$ and $\dot{x}$ in the output vector you can see that the function now returns the derivative of $\vec{x}$ \begin{align*}
+  \begin{bmatrix}
+    \dot{\theta}  \\
+    \ddot{\theta} \\
+    \dot{x}       \\
+    \ddot{x}
+  \end{bmatrix} & = \vec{f}(\vec{x}) = \begin{bmatrix}
+                                         \dot{\theta}                                                                                                         \\
+                                         \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
+                                         \dot{x}                                                                                                              \\
+                                         \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
+                                       \end{bmatrix}    \\
+  \dvec{x}         & = \vec{f}(\vec{x}) = \begin{bmatrix}
+                                            \dot{\theta}                                                                                                         \\
+                                            \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
+                                            \dot{x}                                                                                                              \\
+                                            \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
+                                          \end{bmatrix}.
+\end{align*}
 
-However, something to remember is our goal is to keep the cart in the middle of the track, the pendulum upright, and neither of them moving. In other words, we want all four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ to be $0$. The further they are from $0$ the less likely it is we'll be able to recover and we might have to accept that the pendulum's going to fall over. It sounds like linearisation might work for us!
+The general equation to linearise a vector-valued multivariable function like this is at a particular point $\vec{p}$ is \[\vec{f}(\vec{x}) \approx f(\vec{p}) + D \vec{f}|_{\vec{p}} (\vec{x} - \vec{p}).\] As I mentioned before we want to linearise our function at the point where all the elements of $\vec{x}$ are $0$. That means $\vec{p}$ is the zero vector \[\vec{f}(\vec{x}) \approx f \left( \begin{bmatrix}
+      0 \\
+      0 \\
+      0 \\
+      0
+    \end{bmatrix} \right) + D \vec{f}|_{\vec{p}} \left( \vec{x} - \begin{bmatrix}
+    0 \\
+    0 \\
+    0 \\
+    0
+  \end{bmatrix} \right).\] Looking at the equations within $\vec{f}(\vec{x})$ you can see that at this point $\dot{\theta}$ is $0$, the numerator of $\ddot{\theta}$ has a common term of $\sin \theta$ which is also $0$, $\dot{x}$ is $0$, and the numerator of $\ddot{x}$ contains the terms $\sin 2 \theta$ and $\sin \theta$, both of which are $0$. So $\vec{f}(\vec{p})$ is also the zero vector and we can remove it from our linearised function \[\vec{f}(\vec{x}) \approx D \vec{f}|_{\vec{p}} \vec{x}.\]
 
-So how do we linearise our equations of motion?
+The term $D \vec{f}|_{\vec{p}}$ is the Jacobian matrix of our function evaluated at the point $\vec{p}$. It plays the same role the derivative did in the previous two-dimensional example — namely when multiplied by a vector $\vec{x}$ it tells you how much each component of the function differs from the point at which it was linearised. If we actually evaluate this at the point $\vec{p}$ we get \[D \vec{f}|_{\vec{p}} = \begin{bmatrix}
+    0                           & 1 & 0 & 0 \\
+    \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
+    0                           & 0 & 0 & 1 \\
+    \frac{g m_2}{m_1}           & 0 & 0 & 0
+  \end{bmatrix}\] which means the linearised version of our function is \[\dvec{x} = \begin{bmatrix}
+    0                           & 1 & 0 & 0 \\
+    \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
+    0                           & 0 & 0 & 1 \\
+    \frac{g m_2}{m_1}           & 0 & 0 & 0
+  \end{bmatrix} \vec{x}.\]
+
+I've intentionally skimmed over some details in this section because it's quite a complicated topic. If you'd like to learn more about linearising nonlinear systems and when it's actually valid to do that, these two videos from Steve Brunton are great: \href{https://www.youtube.com/watch?v=RCWkzzLgwf0}{Linearizing Nonlinear Differential Equations Near a Fixed Point}, and \href{https://www.youtube.com/watch?v=vRaUSnB7qNw}{The Hartman-Grobman Theorem, Structural Stability of Linearization, and Stable/Unstable Manifolds}.
 
 \end{document}
