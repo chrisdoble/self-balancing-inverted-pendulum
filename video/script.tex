@@ -127,7 +127,7 @@ So how do we linearise our equations of motion? First, let's rewrite them in vec
   \end{bmatrix} = \vec{f}(\theta, \dot{\theta}) = \begin{bmatrix}
     \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
     \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
-  \end{bmatrix}.\] Let's also introduce the state vector $\vec{x}$ which can be used to describe the state of the system and contains the four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ \[\vec{x} = \begin{bmatrix}
+\end{bmatrix}.\] Let's also introduce the state vector $\vec{x}$ which can be used to describe the state of the system \[\vec{x} = \begin{bmatrix}
     \theta       \\
     \dot{\theta} \\
     x            \\
@@ -175,7 +175,7 @@ The term $D \vec{f}|_{\vec{p}}$ is the Jacobian matrix of our function evaluated
     \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
     0                           & 0 & 0 & 1 \\
     \frac{g m_2}{m_1}           & 0 & 0 & 0
-  \end{bmatrix}\] which means the linearised version of our function is \[\dvec{x} = \begin{bmatrix}
+\end{bmatrix}.\] I'm going to call this matric $\vec{A}$ which means the linearised version of our function is \[\dvec{x} = \vec{A} \vec{x} = \begin{bmatrix}
     0                           & 1 & 0 & 0 \\
     \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
     0                           & 0 & 0 & 1 \\
@@ -183,5 +183,9 @@ The term $D \vec{f}|_{\vec{p}}$ is the Jacobian matrix of our function evaluated
   \end{bmatrix} \vec{x}.\]
 
 I've intentionally skimmed over some details in this section because it's quite a complicated topic. If you'd like to learn more about linearising nonlinear systems and when it's actually valid to do that, these two videos from Steve Brunton are great: \href{https://www.youtube.com/watch?v=RCWkzzLgwf0}{Linearizing Nonlinear Differential Equations Near a Fixed Point}, and \href{https://www.youtube.com/watch?v=vRaUSnB7qNw}{The Hartman-Grobman Theorem, Structural Stability of Linearization, and Stable/Unstable Manifolds}.
+
+\section{Stability}
+
+Now that we have a linearised version of our equations of motion we can apply the tools of linear control theory. One such tool is stability analysis. This tells us that if any of the eigenvalues of our $\vec{A}$ matrix have a positive real component, the system is unstable or it'll move away from the point at which it was linearised. Our four eigenvalues are \[0, \ 0, \ -\sqrt{\frac{g (m_1 + m_2)}{l m_1}}, \text{ and } \sqrt{\frac{g (m_1 + m_2)}{l m_1}}.\] The last of these has a positive real component which tells us what we already know: the system is unstable.
 
 \end{document}
