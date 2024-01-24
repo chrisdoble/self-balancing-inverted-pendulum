@@ -104,7 +104,7 @@ Now that we have the Lagrangian we can apply the Euler-Lagrange equation to each
 \ddot{x}      & = \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}.
 \end{align*}
 
-Now that we've got them how do we know they're correct? One way would be to solve them for $\theta$ and $x$ and see if their predictions are reasonable. I certainly don't know how to solve them analytically, but we can solve them numerically. This is a Mathematica notebook I created to do just that. You can see we define some constants like gravity, the length of the pendulum, etc. We define the initial conditions for the simulation — here the pendulum is starting $\ang{30}$ from vertical. We solve the equations of motion numerically, and generate an animation of the solution which you can see if I evaluate the notebook.
+Now that we've got them how do we know they're correct? One way would be to solve them for $\theta$ and $x$ and see if their predictions are reasonable. I certainly don't know how to solve them analytically, but we can solve them numerically. This is a Mathematica notebook I created to do just that. You can see we define some constants like gravity, the length of the pendulum, etc. We define the initial conditions for the simulation — here the pendulum is starting $\ang{30}$ from vertical. We solve the equations of motion numerically, and we generate an animation of the solution which you can see when I evaluate the notebook.
 
 The pendulum swings back and forth as we expect, but interestingly it also causes the cart to move. This model doesn't include air resistance or friction so it'll keep swinging forever, but we can tweak the variables and see how that affects the solution. Let's make the cart much heavier. It still moves, but much less than before, which makes sense.
 
@@ -119,7 +119,7 @@ Linearising a function means finding a linear approximation of it at a particula
 \includegraphics[width=\textwidth]{linearisation}
 \end{figure}
 
-In the case of the pendulum, our goal is to keep the cart in the middle of the track, the pendulum upright, and neither of them moving. In other words, we want all four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ to be $0$. The further they are from $0$ the less likely it is we'll be able to recover and we might have to accept that the pendulum's going to fall over. It sounds like we can tolerate the approximation error and linearisation might work for us!
+In the case of the pendulum, our goal is to keep the cart in the middle of the track, the pendulum upright, and neither of them moving. In other words, we want all four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ to be $0$. The further they are from $0$ the less likely it is we'll be able to recover and we might have to accept that the pendulum's going to fall over or hit the end of the track. It sounds like we can tolerate the approximation error and linearisation might work for us!
 
 So how do we linearise our equations of motion? First, let's rewrite them in vector form. We'll combine our two real-valued functions into one vector-valued function \[\begin{bmatrix}
     \ddot{\theta} \\
@@ -127,12 +127,12 @@ So how do we linearise our equations of motion? First, let's rewrite them in vec
   \end{bmatrix} = \vec{f}(\theta, \dot{\theta}) = \begin{bmatrix}
     \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
     \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
-\end{bmatrix}.\] Let's also introduce the state vector $\vec{x}$ which can be used to describe the state of the system \[\vec{x} = \begin{bmatrix}
+\end{bmatrix}.\] Let's also introduce the state vector $\vec{x}$ which describes the state of the system \[\vec{x} = \begin{bmatrix}
     \theta       \\
     \dot{\theta} \\
     x            \\
     \dot{x}
-  \end{bmatrix}.\] Now we can change our function to accept a single variable $\vec{x}$ \[\begin{bmatrix}
+\end{bmatrix}.\] Now we can change our function to just accept the state vector $\vec{x}$ \[\begin{bmatrix}
     \ddot{\theta} \\
     \ddot{x}
   \end{bmatrix} = \vec{f}(\vec{x}) = \begin{bmatrix}
@@ -158,7 +158,7 @@ So how do we linearise our equations of motion? First, let's rewrite them in vec
                                           \end{bmatrix}.
 \end{align*}
 
-The general equation to linearise a vector-valued multivariable function like this is at a particular point $\vec{p}$ is \[\vec{f}(\vec{x}) \approx f(\vec{p}) + D \vec{f}|_{\vec{p}} (\vec{x} - \vec{p}).\] As I mentioned before we want to linearise our function at the point where all the elements of $\vec{x}$ are $0$. That means $\vec{p}$ is the zero vector \[\vec{f}(\vec{x}) \approx f \left( \begin{bmatrix}
+The general equation to linearise a function like this is at a particular point $\vec{p}$ is \[\vec{f}(\vec{x}) \approx f(\vec{p}) + D \vec{f}|_{\vec{p}} (\vec{x} - \vec{p}).\] As I mentioned before we want to linearise our function at the point where all the elements of $\vec{x}$ are $0$. That means $\vec{p}$ is the zero vector \[\vec{f}(\vec{x}) \approx f \left( \begin{bmatrix}
       0 \\
       0 \\
       0 \\
@@ -175,17 +175,51 @@ The term $D \vec{f}|_{\vec{p}}$ is the Jacobian matrix of our function evaluated
     \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
     0                           & 0 & 0 & 1 \\
     \frac{g m_2}{m_1}           & 0 & 0 & 0
-\end{bmatrix}.\] I'm going to call this matric $\vec{A}$ which means the linearised version of our function is \[\dvec{x} = \vec{A} \vec{x} = \begin{bmatrix}
+\end{bmatrix}.\] I'm going to call this matrix $\vec{A}$ which means the linearised version of our function is \[\dvec{x} = \vec{A} \vec{x} = \begin{bmatrix}
     0                           & 1 & 0 & 0 \\
     \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
     0                           & 0 & 0 & 1 \\
     \frac{g m_2}{m_1}           & 0 & 0 & 0
   \end{bmatrix} \vec{x}.\]
 
-I've intentionally skimmed over some details in this section because it's quite a complicated topic. If you'd like to learn more about linearising nonlinear systems and when it's actually valid to do that, these two videos from Steve Brunton are great: \href{https://www.youtube.com/watch?v=RCWkzzLgwf0}{Linearizing Nonlinear Differential Equations Near a Fixed Point}, and \href{https://www.youtube.com/watch?v=vRaUSnB7qNw}{The Hartman-Grobman Theorem, Structural Stability of Linearization, and Stable/Unstable Manifolds}.
+I've intentionally skimmed over some details in this section in the interests of time. If you'd like to learn more about linearising nonlinear systems and when it's actually valid to do that, these two videos from Steve Brunton are great: \href{https://www.youtube.com/watch?v=RCWkzzLgwf0}{Linearizing Nonlinear Differential Equations Near a Fixed Point}, and \href{https://www.youtube.com/watch?v=vRaUSnB7qNw}{The Hartman-Grobman Theorem, Structural Stability of Linearization, and Stable/Unstable Manifolds}.
 
 \section{Stability}
 
-Now that we have a linearised version of our equations of motion we can apply the tools of linear control theory. One such tool is stability analysis. This tells us that if any of the eigenvalues of our $\vec{A}$ matrix have a positive real component, the system is unstable or it'll move away from the point at which it was linearised. Our four eigenvalues are \[0, \ 0, \ -\sqrt{\frac{g (m_1 + m_2)}{l m_1}}, \text{ and } \sqrt{\frac{g (m_1 + m_2)}{l m_1}}.\] The last of these has a positive real component which tells us what we already know: the system is unstable.
+Now that we have a linearised version of our equations of motion we can apply the tools of linear control theory. One such tool is stability analysis. This tells us that if any of the eigenvalues of our $\vec{A}$ matrix have a positive real component, the system is unstable. Our four eigenvalues are \[0, \ 0, \ -\sqrt{\frac{g (m_1 + m_2)}{l m_1}}, \text{ and } \sqrt{\frac{g (m_1 + m_2)}{l m_1}}.\] The last of these has a positive real component which tells us what we already know: the pendulum's going to fall over.
+
+\section{Control}
+
+I mentioned earlier that the cart moves left and right to keep the pendulum upright. This is how we control the system: a force $F$ on the cart in the $x$ direction. We can recalculate our equations of motion to include this force, the only difference is we apply d'Alembert's principle to the Euler-Lagrange equation for the $x$ coordinate, equating it to $F$. This results in the equations of motion \begin{align*}
+  \ddot{\theta} & = f(\theta, \dot{\theta}) + \frac{\cos \theta}{l (m_1 + m_2) - l m_2 \cos^2 \theta} F \\
+  \ddot{x}      & = g(\theta, \dot{\theta}) + \frac{2}{2 m_1 + m_2 - m_2 \cos 2 \theta} F.
+\end{align*} Again, our goal is for $\theta$ to be close to $0$ so we can use the small angle approximation which gives \begin{align*}
+  \ddot{\theta} & = f(\theta, \dot{\theta}) + \frac{1}{l m_1} F \\
+  \ddot{x}      & = g(\theta, \dot{\theta}) + \frac{1}{m_1} F.
+\end{align*} Substituting this into our linearised equations of motion gives \begin{align*}
+  \dvec{x} & = \vec{A} \vec{x} + \vec{B} F              \\
+           & = \begin{bmatrix}
+                 0                           & 1 & 0 & 0 \\
+                 \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
+                 0                           & 0 & 0 & 1 \\
+                 \frac{g m_2}{m_1}           & 0 & 0 & 0
+               \end{bmatrix} \vec{x} + \begin{bmatrix}
+                                         0               \\
+                                         \frac{1}{l m_1} \\
+                                         0               \\
+                                         \frac{1}{m_1}
+                                       \end{bmatrix} F.
+\end{align*}
+
+Now we have a way to control the system, but how do we choose $F$? Obviously we want it to be a function of the state of the system — for example, if the pendulum is close to vertical we want to apply a small force but if it's far from vertical we want to apply a larger force. This suggests we could define it as \[F = \vec{K} \vec{x}\] where $\vec{K}$ is a row matrix. Conventionally this is written as \[F = -\vec{K} \vec{x}.\]
+
+If we substitute this into our linearised equation of motion we get \begin{align*}
+  \dvec{x} & = \vec{A} \vec{x} - \vec{B} \vec{K} \vec{x} \\
+           & = (\vec{A} - \vec{B} \vec{K}) \vec{x}.
+\end{align*} This looks very similar to the original equation but $\vec{A}$ has been replaced by $\vec{A} - \vec{B} \vec{K}$. If we can choose $\vec{K}$ in such a way that the eigenvalues of this new matrix don't have positive real components, the system will be stable.
+
+So how do we choose $\vec{K}$? One approach is to use the Linear Quadratic Regulator algorithm. Now I don't completely understand how this works, but thankfully there's a Mathematica function that does. It accepts our matrices $\vec{A}$ and $\vec{B}$ plus two additional matrices that define how much it ``costs'' to apply a force to the cart and for each variable to differ from $0$. For example, if we don't want to use much electricity running the motor we could set the force cost high and the resulting $\vec{K}$ matrix would minimise its use. Or if we don't want the cart to move far from the centre of the track we could set the $x$ cost high and the matrix would try to minimise it but possibly at the expense of another variable like the pendulum angle.
+
+This Mathematica notebook calculates the $\vec{K}$ matrix and generates an animation of a pendulum controlled by it. Like the last notebook, we define some constants, initial conditions, our $\vec{A}$ and $\vec{B}$ matrices, our cost matrices, we calculate $\vec{K}$, confirm its eigenvalues don't have positive real parts, and finally generate an animation. If I evaluate the notebook we get our $\vec{K}$ matrix, we can see its eigenvalues don't have positive real parts so the system is stable, and we can play our animation. It looks good! Let's see what happens if we tweak the cost matrix. I'll increase the cost of applying a force to the cart. Regenerating the animation, we can see the cart moves much further from the centre of the track because it's trying to minimise the applied force.
 
 \end{document}
