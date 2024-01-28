@@ -10,8 +10,12 @@ const double c = 6.50454;
 /** The constant d in the acceleration equation a = c vin + d v. */
 const double d = -33.0202;
 
-/** The state feedback matrix. */
-const double k[] = {71.1851, 17.6506, -9.87532, -15.4159};
+/**
+ * The state feedback matrix.
+ *
+ * When multiplied by the state vector gives the force to apply.
+ */
+const double k[] = {9.35777, 2.05238, -0.968795, -1.56884};
 
 /**
  * Physical constants
@@ -106,11 +110,11 @@ enum State {
   CART_CENTRED,
   /**
    * The pendulum angle has been zeroed. Wait for the pendulum angle to near
-   * ±160° at which point the pendulum angle can be offset by ±180°. Now a
+   * ±175° at which point the pendulum angle can be offset by ±180°. Now a
    * pendulum angle of 0° corresponds to the pendulum pointing up.
    */
   PENDULUM_ANGLE_ZEROED,
-  /** The system is running, tryin to keep the pendulum upright. */
+  /** The system is running, trying to keep the pendulum upright. */
   RUNNING,
   /** The system has been killed. */
   KILLED
@@ -249,8 +253,12 @@ void loop() {
 
       const double f = -(k[0] * pendulumAngle + k[1] * pendulumAngularVelocity + k[2] * (cartPosition - centreOfTrack) + k[3] * cartVelocity);
       const double voltage = (f / cartMass - d * cartVelocity) / c;
-      const short speed = (short)(voltage / motorVoltage * 255.0 + 1);
+      const short speed = (short)(voltage / motorVoltage * 255.0);
       setMotorSpeed(speed);
+
+      // Without this the main loop takes 0.5ms to execute and, for some reason,
+      // the pendulum drifts to the right very quickly. This delay fixes it.
+      delayMicroseconds(1500);
 
       break;
     }
@@ -274,10 +282,10 @@ void checkLimitSwitch() {
 }
 
 /**
- * Performs a quadratic regression over the last n data points, differentiates
- * the result, and uses that to predict the current (angular) velocity.
+ * Calculates the cart's velocity and the pendulum's angular velocity using a
+ * first order backward difference over recently collected data points.
  *
- * See https://en.wikipedia.org/wiki/Polynomial_regression#Matrix_form_and_calculation_of_estimates
+ * https://en.wikipedia.org/wiki/Numerical_differentiation#Finite_differences
  */
 void updateVelocities() {
   const uint8_t n = velocityDataCount;
@@ -291,7 +299,6 @@ void updateVelocities() {
   velocityDataPositions[n - 1] = cartPosition;
   velocityDataTimes[n - 1] = micros() / 1000000.0;
 
-  // Use a backward finite difference to calculate the current velocities
   const double dt = velocityDataTimes[n - 1] - velocityDataTimes[0];
   cartVelocity = (velocityDataPositions[n - 1] - velocityDataPositions[0]) / dt;
   pendulumAngularVelocity = (velocityDataAngles[n - 1] - velocityDataAngles[0]) / dt;
@@ -299,13 +306,16 @@ void updateVelocities() {
 
 void setMotorSpeed(const short speed) {
   digitalWrite(motorSpeedDirPin, speed < 0 ? HIGH : LOW);
-  analogWrite(motorSpeedPwmPin, min(abs(speed), 30));
+
+  // The 24V motor is overkill. Limit the speed so nothing breaks.
+  analogWrite(motorSpeedPwmPin, min(abs(speed), 100));
 }
 
 /**
  * Computes the interval spanning a range of values and returns its size.
  *
- * For example, the interval size of [1.0, 3.0, 2.0] is 3.0 - 1.0 = 2.0.
+ * For example, the interval spanning the values [1.0, 3.0, 2.0] is [1.0, 3.0]
+ * and its size is 3.0 - 1.0 = 2.0.
  */
 double getIntervalSize(const double *data, uint8_t length) {
   double maximum = -INFINITY;
@@ -332,9 +342,9 @@ bool checkCartPosition() {
   return true;
 }
 
-/** If the pendulum is more than 90° away from verticle, kill it. */
+/** If the pendulum is more than 45° away from verticle, kill it. */
 bool checkPendulumAngle() {
-  if (abs(pendulumAngle) > M_PI / 2) {
+  if (abs(pendulumAngle) > M_PI / 4) {
     Serial.println("Pendulum angle too great");
     state = KILLED;
     return false;
