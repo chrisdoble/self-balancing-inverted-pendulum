@@ -14,6 +14,7 @@
   urlcolor=blue
 }
 
+\DeclareMathOperator{\rank}{rank}
 \renewcommand{\vec}[1]{\boldsymbol{\mathbf{#1}}}
 \newcommand{\dvec}[1]{\dot{\vec{#1}}}
 
@@ -23,9 +24,11 @@
 
 \section{Introduction}
 
-I recently built this self-balancing inverted pendulum on a cart. If you've ever tried to keep something like a broom or a stick upright on your hand you'll know it can be quite tricky! Gravity's constantly pulling it down, so if it’s not perfectly vertical it’ll start to fall. The same thing happens to the pendulum but the cart's programmed to move left and right in a way that keeps it upright.
+I recently built this balancing pendulum on a cart. If you've ever tried to keep something like a broom or a stick upright on your hand you'll know it can be quite tricky! Gravity's constantly pulling it down, so if it’s not perfectly vertical it’ll start to fall. The same thing happens to the pendulum but the cart's programmed to move left and right in a way that keeps it upright.
 
-In this video I’ll explain how I built this, starting with the math and physics, and then the construction and code. The math will make the most sense if you're familiar with calculus and a little linear algebra but if not, don't worry, you should still be able to follow along.
+In this video I’ll explain how I built it. I'll start by deriving the system's equations of motion, I'll apply some control theory to those equations to analyse the stability of the system and determine how to control it, I'll talk about how I physically built it, and finally I'll talk about the code that controls it.
+
+The math will make the most sense if you're familiar with calculus and a little linear algebra, but if not, don't worry, you should still be able to follow along.
 
 \section{Equations of Motion}
 
@@ -63,7 +66,7 @@ We have a cart of mass $m_1$ that can only move along the $x$-axis and its posit
 
 With that out of the way, now we can determine the Lagrangian of the system which is defined as the difference between its kinetic and potential energies: $\mathcal{L} = T - U$. Well, what are those energies?
 
-Starting with the cart, its kinetic energy is \[T_\text{cart} = \frac{1}{2} m_1 v^2\] but because it can only move along the $x$-axis its velocity has no $y$ component this is equivalent to \[T_\text{cart} = \frac{1}{2} m_1 \dot{x}^2.\] Again, it can't move up or down, so its potential energy can't change and we might as well set it to $0$ \[U_\text{cart} = 0.\]
+Starting with the cart, its kinetic energy is \[T_\text{cart} = \frac{1}{2} m_1 v^2\] but because it can only move along the $x$-axis its velocity has no $y$ component this is equivalent to \[T_\text{cart} = \frac{1}{2} m_1 \dot{x}^2\] I'm going to use Newton's notation for derivatives so when you see a dot or a double dot over a variable that's what that means. As for the cart's potential energy, it can't move up or down so its gravitational potential energy can't change and there's no springs or anything involved so we might as well set it to \[U_\text{cart} = 0.\]
 
 Next, the pendulum. Because it's joined to the cart its $x$ coordinate changes as cart moves, and both of its coordinates change as it rotates. We can write its coordinates as \begin{align*}
   X & = x - l \sin \theta \\
@@ -106,22 +109,22 @@ Now that we have the Lagrangian we can apply the Euler-Lagrange equation to each
 
 Now that we've got them how do we know they're correct? One way would be to solve them for $\theta$ and $x$ and see if their predictions are reasonable. I certainly don't know how to solve them analytically, but we can solve them numerically. This is a Mathematica notebook I created to do just that. You can see we define some constants like gravity, the length of the pendulum, etc. We define the initial conditions for the simulation — here the pendulum is starting $\ang{30}$ from vertical. We solve the equations of motion numerically, and we generate an animation of the solution which you can see when I evaluate the notebook.
 
-The pendulum swings back and forth as we expect, but interestingly it also causes the cart to move. This model doesn't include air resistance or friction so it'll keep swinging forever, but we can tweak the variables and see how that affects the solution. Let's make the cart much heavier. It still moves, but much less than before, which makes sense.
+The pendulum swings back and forth as we expect, but interestingly it also causes the cart to move. This model doesn't include air resistance or friction so it'll keep swinging forever, but we can tweak the variables and see how that affects the solution. Let's try making the cart much heavier. It still moves, but much less than before, which makes sense.
 
 \section{Linearisation}
 
 These equations look good, but they're quite complicated so it might be difficult to analyse the stability of the system and determine how to control it. Can we simplify them at all? Well, one approach is to linearise them.
 
-Linearising a function means finding a linear approximation of it at a particular point. For example, if we graph a function $y = f(x)$ and we want to linearise it at $x = 1$, we evaluate it at the point to find its $y$ coordinate, and we evaluate its derivative at the point to find its slope. Using this information we can plot a new function that passes through the point and extends its slope in both directions. It's a line. If you zoom in the line does a pretty good job of approximating the function. As you move away it doesn't do as good of a job, but if you only care about the area around the point that's fine.
+Linearising a function means finding a linear approximation of it at a particular point. For example, if we graph a function $y = f(x)$ and we want to linearise it at $x = 1$, we evaluate it at the point to find its $y$ coordinate, and we evaluate its derivative at the point to find its slope. Using this information we can plot a new function that passes through the point and extends the slope in both directions. It's a line. If you zoom in the line does a pretty good job of approximating the function. As you move away it doesn't do as good of a job, but if you only care about the area around the point that's fine.
 
 \begin{figure}[H]
   \centering
 \includegraphics[width=\textwidth]{linearisation}
 \end{figure}
 
-In the case of the pendulum, our goal is to keep the cart in the middle of the track, the pendulum upright, and neither of them moving. In other words, we want all four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ to be $0$. The further they are from $0$ the less likely it is we'll be able to recover and we might have to accept that the pendulum's going to fall over or hit the end of the track. It sounds like we can tolerate the approximation error and linearisation might work for us!
+In the case of the pendulum, our goal is to keep the cart in the middle of the track, the pendulum upright, and neither the cart nor the pendulum moving. In other words, we want all four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ to be $0$. The further they are from $0$ the less likely it is we'll be able to recover and we might have to accept that the pendulum's going to fall over or hit the end of the track. If they're always going to be near $0$ then it sounds like we can tolerate the approximation error and linearisation might work for us!
 
-So how do we linearise our equations of motion? First, let's rewrite them in vector form. We'll combine our two real-valued functions into one vector-valued function \[\begin{bmatrix}
+So how do we linearise our equations of motion? First, let's combine them into one vector-valued function \[\begin{bmatrix}
     \ddot{\theta} \\
     \ddot{x}
   \end{bmatrix} = \vec{f}(\theta, \dot{\theta}) = \begin{bmatrix}
@@ -138,7 +141,7 @@ So how do we linearise our equations of motion? First, let's rewrite them in vec
   \end{bmatrix} = \vec{f}(\vec{x}) = \begin{bmatrix}
     \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
     \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
-  \end{bmatrix}\] and if we include $\dot{\theta}$ and $\dot{x}$ in the output vector you can see that the function now returns the derivative of $\vec{x}$ \begin{align*}
+\end{bmatrix}\] and if we include $\dot{\theta}$ and $\dot{x}$ in the output you can see that the function now returns the derivative of $\vec{x}$ \begin{align*}
   \begin{bmatrix}
     \dot{\theta}  \\
     \ddot{\theta} \\
@@ -168,9 +171,9 @@ The general equation to linearise a function like this is at a particular point 
     0 \\
     0 \\
     0
-  \end{bmatrix} \right).\] Looking at the equations within $\vec{f}(\vec{x})$ you can see that at this point $\dot{\theta}$ is $0$, the numerator of $\ddot{\theta}$ has a common term of $\sin \theta$ which is also $0$, $\dot{x}$ is $0$, and the numerator of $\ddot{x}$ contains the terms $\sin 2 \theta$ and $\sin \theta$, both of which are $0$. So $\vec{f}(\vec{p})$ is also the zero vector and we can remove it from our linearised function \[\vec{f}(\vec{x}) \approx D \vec{f}|_{\vec{p}} \vec{x}.\]
+\end{bmatrix} \right).\] Looking at the equations within $\vec{f}(\vec{x})$ you can see that at the point $\vec{p}$, $\dot{\theta}$ is $0$, the numerator of $\ddot{\theta}$ has a common term of $\sin \theta$ which is also $0$, $\dot{x}$ is $0$, and the numerator of $\ddot{x}$ contains the terms $\sin 2 \theta$ and $\sin \theta$, both of which are $0$. So $\vec{f}(\vec{p})$ is also the zero vector and we can remove it from our linearised function \[\vec{f}(\vec{x}) \approx D \vec{f}|_{\vec{p}} \vec{x}.\]
 
-The term $D \vec{f}|_{\vec{p}}$ is the Jacobian matrix of our function evaluated at the point $\vec{p}$. It plays the same role the derivative did in the previous two-dimensional example — namely when multiplied by a vector $\vec{x}$ it tells you how much each component of the function differs from the point at which it was linearised. If we actually evaluate this at the point $\vec{p}$ we get \[D \vec{f}|_{\vec{p}} = \begin{bmatrix}
+$D \vec{f}$ is called the Jacobian matrix of our function and $D \vec{f}|_{\vec{p}}$ is it evaluated at the point $\vec{p}$. It plays the same role the derivative did in the previous two-dimensional example — when you multiply it by a displacement vector $\vec{x}$ it tells you how much each component of the function differs from the point at which it was linearised. It's like extending the slope in each dimension. If we actually evaluate this at the point $\vec{p}$ we get \[D \vec{f}|_{\vec{p}} = \begin{bmatrix}
     0                           & 1 & 0 & 0 \\
     \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
     0                           & 0 & 0 & 1 \\
@@ -182,21 +185,21 @@ The term $D \vec{f}|_{\vec{p}}$ is the Jacobian matrix of our function evaluated
     \frac{g m_2}{m_1}           & 0 & 0 & 0
   \end{bmatrix} \vec{x}.\]
 
-I've intentionally skimmed over some details in this section in the interests of time. If you'd like to learn more about linearising nonlinear systems and when it's actually valid to do that, these two videos from Steve Brunton are great: \href{https://www.youtube.com/watch?v=RCWkzzLgwf0}{Linearizing Nonlinear Differential Equations Near a Fixed Point}, and \href{https://www.youtube.com/watch?v=vRaUSnB7qNw}{The Hartman-Grobman Theorem, Structural Stability of Linearization, and Stable/Unstable Manifolds}.
+I've intentionally skimmed over some details in this section in the interests of time. If you'd like to learn more about linearising nonlinear systems and when it's actually valid to do that, these two videos from Steve Brunton are really great: \href{https://www.youtube.com/watch?v=RCWkzzLgwf0}{Linearizing Nonlinear Differential Equations Near a Fixed Point}, and \href{https://www.youtube.com/watch?v=vRaUSnB7qNw}{The Hartman-Grobman Theorem, Structural Stability of Linearization, and Stable/Unstable Manifolds}.
 
 \section{Stability}
 
-Now that we have a linearised version of our equations of motion we can apply the tools of linear control theory. One such tool is stability analysis. This tells us that if any of the eigenvalues of our $\vec{A}$ matrix have a positive real component, the system is unstable. Our four eigenvalues are \[0, \ 0, \ -\sqrt{\frac{g (m_1 + m_2)}{l m_1}}, \text{ and } \sqrt{\frac{g (m_1 + m_2)}{l m_1}}.\] The last of these has a positive real component which tells us what we already know: the pendulum's going to fall over.
+Now that we have a linearised version of our equations of motion we can apply some tools from linear control theory. One of those tools is stability analysis. This tells us that if any of the eigenvalues of our $\vec{A}$ matrix have a positive real component, the system is unstable. Our four eigenvalues are \[0, \ 0, \ -\sqrt{\frac{g (m_1 + m_2)}{l m_1}}, \text{ and } \sqrt{\frac{g (m_1 + m_2)}{l m_1}}.\] All of the values under that radical are positive, so the second two eigenvalues are real and the last eigenvalue is positive which tells us what we already know: the pendulum's going to fall over.
 
 \section{Control}
 
-I mentioned earlier that the cart moves left and right to keep the pendulum upright. This is how we control the system: a force $F$ on the cart in the $x$ direction. We can recalculate our equations of motion to include this force, the only difference is we apply d'Alembert's principle to the Euler-Lagrange equation for the $x$ coordinate, equating it to $F$. This results in the equations of motion \begin{align*}
+I mentioned earlier that the cart moves left and right to keep the pendulum upright. A more formal way to say that is: we can say we apply a force $F$ on the cart in the $x$ direction. We can recalculate our equations of motion to include this force, the only difference is we apply d'Alembert's principle to the Euler-Lagrange equation for the $x$ coordinate and equate it to $F$. This results in the following updated equations of motion where I've hidden some terms so we can focus on the coefficients of $F$ \begin{align*}
   \ddot{\theta} & = f(\theta, \dot{\theta}) + \frac{\cos \theta}{l (m_1 + m_2) - l m_2 \cos^2 \theta} F \\
   \ddot{x}      & = g(\theta, \dot{\theta}) + \frac{2}{2 m_1 + m_2 - m_2 \cos 2 \theta} F.
-\end{align*} Again, our goal is for $\theta$ to be close to $0$ so we can use the small angle approximation which gives \begin{align*}
+\end{align*} Again, our goal is for $\theta$ to be close to $0$ so we can use the small angle approximation where $\cos \theta = 1$ and that gives the simplified equations \begin{align*}
   \ddot{\theta} & = f(\theta, \dot{\theta}) + \frac{1}{l m_1} F \\
   \ddot{x}      & = g(\theta, \dot{\theta}) + \frac{1}{m_1} F.
-\end{align*} Substituting this into our linearised equations of motion gives \begin{align*}
+\end{align*} If we use the coefficients of $F$ to create a new matrix $\vec{B}$ and substitute this into our linearised equations of motion we get \begin{align*}
   \dvec{x} & = \vec{A} \vec{x} + \vec{B} F              \\
            & = \begin{bmatrix}
                  0                           & 1 & 0 & 0 \\
@@ -210,6 +213,10 @@ I mentioned earlier that the cart moves left and right to keep the pendulum upri
                                          \frac{1}{m_1}
                                        \end{bmatrix} F.
 \end{align*}
+
+Another useful tool from control theory is the concept of controllability. A system is said to be controllable if it's possible to move it into any state you want using only its inputs. In our case, the only input is $F$ — is that enough to control the system? It is if the rank of the controllability matrix equals the dimension of the state space \[\rank(\vec{C}) = \rank(\begin{bmatrix}
+      \vec{B} & \vec{A} \vec{B} & \vec{A}^2 \vec{B} & \cdots & \vec{A}^{n - 1} \vec{B}
+    \end{bmatrix}) = n.\] If we perform this calculation using our $\vec{A}$ and $\vec{B}$ matrices we get the value $4$. This is the dimension of our state vector and so we can control the system using the force $F$.
 
 Now we have a way to control the system, but how do we choose $F$? Obviously we want it to be a function of the state of the system — for example, if the pendulum is close to vertical we want to apply a small force but if it's far from vertical we want to apply a larger force. This suggests we could define it as \[F = \vec{K} \vec{x}\] where $\vec{K}$ is a row matrix. Conventionally this is written as \[F = -\vec{K} \vec{x}.\]
 
