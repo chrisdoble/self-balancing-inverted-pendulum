@@ -64,7 +64,7 @@ If we want to control this system we need to know how it behaves when the cart's
 
 We have a cart of mass $m_1$ that can only move along the $x$-axis and its position $x$ is measured from some origin point. The cart is connected to a simple pendulum of length $l$ and mass $m_2$ which is at an angle $\theta$ from vertical.
 
-With that out of the way, now we can determine the Lagrangian of the system which is defined as the difference between its kinetic and potential energies: $\mathcal{L} = T - U$. Well, what are those energies?
+With that out of the way, now we can calculate the Lagrangian of the system which is defined as the difference between its kinetic and potential energies: $\mathcal{L} = T - U$. Well, what are those energies?
 
 Starting with the cart, its kinetic energy is \[T_\text{cart} = \frac{1}{2} m_1 v^2\] but because it can only move along the $x$-axis its velocity has no $y$ component this is equivalent to \[T_\text{cart} = \frac{1}{2} m_1 \dot{x}^2\] I'm going to use Newton's notation for derivatives so when you see a dot or a double dot over a variable that's what that means. As for the cart's potential energy, it can't move up or down so its gravitational potential energy can't change and there's no springs or anything involved so we might as well set it to \[U_\text{cart} = 0.\]
 
@@ -107,7 +107,7 @@ Now that we have the Lagrangian we can apply the Euler-Lagrange equation to each
 \ddot{x}      & = \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}.
 \end{align*}
 
-Now that we've got them how do we know they're correct? One way would be to solve them for $\theta$ and $x$ and see if their predictions are reasonable. I certainly don't know how to solve them analytically, but we can solve them numerically. This is a Mathematica notebook I created to do just that. You can see we define some constants like gravity, the length of the pendulum, etc. We define the initial conditions for the simulation — here the pendulum is starting $\ang{30}$ from vertical. We solve the equations of motion numerically, and we generate an animation of the solution which you can see when I evaluate the notebook.
+Now that we have them how do we know they're correct? One way would be to solve them for $\theta$ and $x$ and see if their predictions are reasonable. I certainly don't know how to solve them analytically, but we can solve them numerically. This is a Mathematica notebook I created to do just that. You can see we define some constants like gravity, the length of the pendulum, etc. We define the initial conditions for the simulation — here the pendulum is starting $\ang{30}$ from vertical. We solve the equations of motion numerically, and we generate an animation of the solution which you can see when I evaluate the notebook.
 
 The pendulum swings back and forth as we expect, but interestingly it also causes the cart to move. This model doesn't include air resistance or friction so it'll keep swinging forever, but we can tweak the variables and see how that affects the solution. Let's try making the cart much heavier. It still moves, but much less than before, which makes sense.
 
@@ -115,7 +115,7 @@ The pendulum swings back and forth as we expect, but interestingly it also cause
 
 These equations look good, but they're quite complicated so it might be difficult to analyse the stability of the system and determine how to control it. Can we simplify them at all? Well, one approach is to linearise them.
 
-Linearising a function means finding a linear approximation of it at a particular point. For example, if we graph a function $y = f(x)$ and we want to linearise it at $x = 1$, we evaluate it at the point to find its $y$ coordinate, and we evaluate its derivative at the point to find its slope. Using this information we can plot a new function that passes through the point and extends the slope in both directions. It's a line. If you zoom in the line does a pretty good job of approximating the function. As you move away it doesn't do as good of a job, but if you only care about the area around the point that's fine.
+Linearising a function means finding a linear approximation of it at a particular point. For example, if we graph a function $y = f(x)$ and we want to linearise it at $x = 1$, we evaluate it at the point to find its $y$ coordinate, and we evaluate its derivative at the point to find its slope. Using this information we can plot a new function that passes through the point and extends the slope in both directions. It's a line. If you zoom in the line does a pretty good job of approximating the function. As you move away it doesn't do as good of a job, but if you only care about the region around the point that's fine.
 
 \begin{figure}[H]
   \centering
@@ -227,6 +227,20 @@ If we substitute this into our linearised equation of motion we get \begin{align
 
 So how do we choose $\vec{K}$? One approach is to use the Linear Quadratic Regulator algorithm. Now I don't completely understand how this works, but thankfully there's a Mathematica function that does. It accepts our matrices $\vec{A}$ and $\vec{B}$ plus two additional matrices that define how much it ``costs'' to apply a force to the cart and for each variable to differ from $0$. For example, if we don't want to use much electricity running the motor we could set the force cost high and the resulting $\vec{K}$ matrix would minimise its use. Or if we don't want the cart to move far from the centre of the track we could set the $x$ cost high and the matrix would try to minimise it but possibly at the expense of another variable like the pendulum angle.
 
-This Mathematica notebook calculates the $\vec{K}$ matrix and generates an animation of a pendulum controlled by it. Like the last notebook, we define some constants, initial conditions, our $\vec{A}$ and $\vec{B}$ matrices, our cost matrices, we calculate $\vec{K}$, confirm its eigenvalues don't have positive real parts, and finally generate an animation. If I evaluate the notebook we get our $\vec{K}$ matrix, we can see its eigenvalues don't have positive real parts so the system is stable, and we can play our animation. It looks good! Let's see what happens if we tweak the cost matrix. I'll increase the cost of applying a force to the cart. Regenerating the animation, we can see the cart moves much further from the centre of the track because it's trying to minimise the applied force.
+This Mathematica notebook calculates the $\vec{K}$ matrix and generates an animation of a pendulum controlled by it. Like the last notebook, we define some constants, initial conditions, our matrices, we calculate $\vec{K}$, and generate an animation. If I evaluate the notebook we get our $\vec{K}$ matrix, we can see its eigenvalues don't have positive real parts so the system is stable, and we can play our animation. It looks good! Let's see what happens if we tweak one of the cost matrices. I'll increase the cost of applying a force to the cart. Regenerating the animation, we can see the cart moves much further from the centre of the track because it's trying to minimise the applied force.
+
+\section{Building}
+
+That's enough math for now. Let's talk about how I built it!
+
+This is a model of the system that I designed in Fusion 360. At the core are two steel rods that the cart slides along on linear bearings. The cart itself and the two ends are 3D printed in PLA and on the bottom of the cart are two extensions that the timing belt connects to, but it's not visible in this model. The timing belt comes from one side of the cart, over the ilder pulley, all the way over to the timing pulley, and back to the other side of the cart. This means that when the timing pulley rotates, the cart moves.
+
+The timing pulley is on an axle that's connected to an incremental rotary encoder so we can measure the position of the cart. On the other side of the axle is a 3D printed 5:1 gear train that's connected to a DC motor. I had to add the gear train because I bought a 24V motor which ended up being overkill for this project and I needed a way to reduce the RPM. On top of the housing is a limit switch which is primarily used to zero the cart position on startup, but it's also used to kill the motor if the cart gets too close to the end.
+
+The pendulum itself is a long steel rod connected to a shorter steel rod with a 90° clamp. The shorter rod runs through some bearings and to another incremental rotary encoder that lets us measure the angle of the pendulum.
+
+The system is all controlled by an Arduino Uno, the motor is controlled by a motor driver which is connected to a 24V power supply, and everything is connected via a breadboard.
+
+After printing and assembling everything this is what it looks like. You can see that there are some long wires connected to the cart so it can move around.
 
 \end{document}
