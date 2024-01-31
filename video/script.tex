@@ -243,4 +243,59 @@ The system is all controlled by an Arduino Uno, the motor is controlled by a mot
 
 After printing and assembling everything this is what it looks like. You can see that there are some long wires connected to the cart so it can move around.
 
+\section{Motor Control}
+
+Great! We have our control algorithm and we've built the physical system, but there's still one missing piece. The control algorithm tells us the force $F$ to apply to the cart, but the Arduino controls the cart via a motor, and it controls the motor via a voltage. How do we convert a force into a voltage? We'll need an equation for that.
+
+\begin{figure}[h]
+  \centering
+  \begin{circuitikz}[american voltages]
+    \draw (0, 0) to [V, invert, l=$V_\text{in}$] (0, 2)
+    to [resistor, l=$R$] (3, 2)
+    to [inductor, l=$L$] (5, 2)
+    to [V, l=$V_\text{motor}$] (5, 0)
+    to (0, 0);
+  \end{circuitikz}
+\end{figure}
+
+We can model the electrical properties of a DC motor using this simple circuit. $V_\text{in}$ is the voltage applied to the motor, $R$ is the resistance of its windings, $L$ is the inductance of its windings, and $V_\text{motor}$ is the back emf generated as the motor is spinning. Applying Kirchoff's voltage law to this circuit gives \[V_\text{in} - I R - \frac{d I}{d t} L - V_\text{motor} = 0.\] If we assume the back emf is proportional to the motor's angular velocity $\omega$ this becomes \[V_\text{in} - I R - \frac{d I}{d t} - a_1 \omega = 0\] where $a_1$ is a proportionality constant.
+
+We can model the mechanical properties of a DC motor by treating it as a rotating cylinder. It experiences a torque from the motor $\tau_m$ and a resistive torque $\tau_r$ from back emf, friction, etc. This gives an equation of motion \[\tau_m - \tau_r = J \dot{\omega}\] where $J$ is the cylinder's moment of inertia. If we assume the torque from the motor is proportional to the current flowing through it and the resistive torque is proportional to the cylinder's angular velocity the equation of motion becomes \[a_2 I - a_3 \omega = J \dot{\omega}.\]
+
+Solving this equation of motion for $I$ gives \[I = \frac{1}{a_2} (a_3 \omega + J \dot{\omega})\] and differentiating this with respect to time gives \[\frac{d I}{d t} = \frac{1}{a_2} (a_3 \dot{\omega} + J \ddot{\omega}).\] Substituting these into the electrical equation gives \[V_\text{in} - \frac{R}{a_2} (a_3 \omega + J \dot{\omega}) - \frac{1}{a_2} (a_3 \dot{\omega} + J \ddot{\omega}) - a_1 \omega = 0.\] This looks a little complicated, but if we rearrange and collect constants we get \[b_1 \ddot{\omega} + b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0\] which has the general solution \[\omega = c_1 V_\text{in} + c_2 e^{c_3 t} + c_4 e^{c_5 t}.\]
+
+Taking a step back, what does this equation represent? It tells us how the motor's angular velocity changes over time if we apply a constant voltage $V_\text{in}$. Can we use our intuition about how the motor behaves to give us any clues about these constants? First of all, we probably don't need two exponential terms, so let's assume $c_4$ is $0$ \[\omega = c_1 V_\text{in} + c_2 e^{c_3 t}.\] Next, we know that if we apply a constant voltage the motor's angular velocity increases quite quickly initially but then resistive forces cause it to stabilise around a steady state value. If that's the case $c_3$ must be negative, otherwise the angular velocity would increase exponentially forever. The motor's angular velocity is $0$ at $t = 0$ so $c_2 = -c_1 V_\text{in}$ \[\omega = c_1 V_\text{in} (1 - e^{c_3 t}), \ c_3 < 0.\] Finally, if we multiply both sides of the equation by the radius of the timing pulley we get the velocity of the cart instead of the angular velocity of the motor which will make things a little easier for us in an upcoming step \[v = d_1 V_\text{in} (1 - e^{-d_2 t}).\]
+
+This is the general equation for the cart's velocity over time at particular input voltage. In order to use it for our pendulum we need to find the values of the constants $d_1$ and $d_2$ for our motor. We can do this by collecting data on the motor's behaviour at different voltages and fitting our model to that data.
+
+This is a Mathematica notebook I created to do just that. Here you can see the cart's velocity over time for 14 different voltages, some forwards, some backwards. Other than this blip around $\qty{0.5}{s}$ it looks as we would expect.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{angular_velocities}
+\end{figure}
+
+Mathematica's \texttt{FindFit} function can be used to find the best parameters to fit an expression to a dataset. If we use it to fit our velocity equation this dataset and plot it on top, it looks like this
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{angular_velocities_fitted}
+\end{figure}
+
+A pretty good fit! One last step and we're done.
+
+We have an equation for the cart's velocity over time but it's not very useful. Firstly because it assumes a constant voltage and we're going to be changing the voltage to move the cart back and forth. Secondly, remember, we're trying to find an equation to convert a force into voltage and this doesn't involve force at all!
+
+How can we fix this? Newton's second law tells us that $F = m a$. If we can find an equation for the acceleration of the cart based on the input voltage, we could rearrange Newton's second law to get the voltage in terms of the force which is what we're looking for!
+
+Let's take the derivative of our velocity equation with respect to time \[a = d_1 d_2 V_\text{in} e^{-d_2 t}.\] This looks promising, but it still assumes a constant voltage and what value would we use for $t$? Let's keep looking.
+
+Earlier we found a time-indepdendent equation for the angular velocity of the motor \[b_1 \ddot{\omega} + b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0.\] If we assume that the first term is small and can be ignored \[b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0,\] multiply by the radius of the timing pulley \[b_2 \dot{v} + b_3 v + R V_\text{in} = 0,\] rearrange, and collect constants we get an equation for the cart's acceleration \[\dot{v} = a = k_1 v + k_2 V_\text{in}.\]
+
+Aha! What if we equate this with our other equation for the cart's acceleration \[d_1 d_2 V_\text{in} e^{-d_2 t} = k_1 v + k_2 V_\text{in}.\] We can also substitute in our equation for the cart's velocity \[d_1 d_2 V_\text{in} e^{-d_2 t} = k_1 d_1 V_\text{in} (1 - e^{-d_2 t}) + k_2 V_\text{in}.\] Rearranging we find \[d_1 d_2 V_\text{in} e^{-d_2 t} = -k_1 d_1 V_\text{in} e^{-d_2 t} + (k_1 d_1 + k_2) V_\text{in}.\] The coefficients on both sides must be equal, so $k_1 = -d_2$ and $k_2 = d_1 d_2$. This gives us an equation for the cart's acceleration based on its velocity and the input voltage \[a = d_1 d_2 V_\text{in} - d_2 v.\]
+
+Is this equation correct? One way to check is to integrate it numerically and check if the result matches the data we collected. Back in the Mathematica notebook we do that, and can see it matches pretty well.
+
+Finally we can multiply the equation by the cart's mass to find the applied force \[F = m_2 (d_1 d_2 V_\text{in} - d_2 v)\] and rearrange to find the voltage required to apply that force \[V_\text{in} = \frac{1}{d_1} \left( v + \frac{F}{d_2 m_2} \right).\]
+
 \end{document}
