@@ -1,5 +1,4 @@
-.DS_Store
-.vscode
+# LaTeX
 *.aux
 *.fdb_latexmk
 *.fls
@@ -8,3 +7,15 @@
 *.synctex.gz
 *.toc
 
+# Mac
+.DS_Store
+
+# Project-specific
+video/media
+
+# Python
+__pycache__
+env
+
+# VS Code
+.vscode
