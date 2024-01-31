@@ -34,7 +34,7 @@ The math will make the most sense if you're familiar with calculus and a little 
 
 If we want to control this system we need to know how it behaves when the cart's free to move, so let’s derive its equations of motion. First we need to define our coordinate system and variables in a diagram:
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \begin{tikzpicture}
     % x
@@ -247,7 +247,7 @@ After printing and assembling everything this is what it looks like. You can see
 
 Great! We have our control algorithm and we've built the physical system, but there's still one missing piece. The control algorithm tells us the force $F$ to apply to the cart, but the Arduino controls the cart via a motor, and it controls the motor via a voltage. How do we convert a force into a voltage? We'll need an equation for that.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \begin{circuitikz}[american voltages]
     \draw (0, 0) to [V, invert, l=$V_\text{in}$] (0, 2)
@@ -296,6 +296,24 @@ Aha! What if we equate this with our other equation for the cart's acceleration 
 
 Is this equation correct? One way to check is to integrate it numerically and check if the result matches the data we collected. Back in the Mathematica notebook we do that, and can see it matches pretty well.
 
-Finally we can multiply the equation by the cart's mass to find the applied force \[F = m_2 (d_1 d_2 V_\text{in} - d_2 v)\] and rearrange to find the voltage required to apply that force \[V_\text{in} = \frac{1}{d_1} \left( v + \frac{F}{d_2 m_2} \right).\]
+Finally we can multiply the equation by the cart's mass to find the applied force \[F = m_2 (d_1 d_2 V_\text{in} - d_2 v)\] and rearrange to find the voltage required to apply that force \[V_\text{in} = \frac{1}{d_1} \left( v + \frac{F}{d_2 m_2} \right).\] So the control algorithm tells us what force to apply and this equation tells us what voltage to apply. We're ready to start coding!
+
+\section{Code}
+
+This is the code that runs the system. One of its most important jobs is to observe signals from the rotary encoders so we know the motor and pendulum angles. That's achieved with these two interrupt handlers. They're called when the signal from a rotary encoder changes, they calculate the angle change, and update the appropriate variable.
+
+The rest of the system is a big state machine. It moves through a series of initialisation states, starts running, and finally gets killed for one reason or another.
+
+On startup we don't know the position of the cart, so in the first state the cart moves to the right until it's pressing the limit switch. At that point we know where the cart is which lets us zero the cart position and motor angle.
+
+Next, the cart moves to the middle of the track which is where we want it to be when it starts running.
+
+We also need to zero the pendulum angle. The pendulum might still be swinging from the cart's movement, so we wait until it's still, assume it's pointing down, and zero it. This does mean that down is considered zero instead of up, but that's fixed in the next state.
+
+The user rotates the pendulum until it's near upright, we offset the pendulum angle so up is consdered zero, and we start running.
+
+If the cart gets too close to either end of the track or the pendulum angle becomes too great, we assume we're not going to be able to recover, and kill the system. You can also kill it manually by pressing the limit switch.
+
+The last significant part of the code is calculating the cart's velocity and the pendulum's angular velocity. On each iteration of the main loop we record the cart's position, the pendulum's angle, and the time. We store the last $10$ of these values and calculate the velocities as the difference between the most recent value and the oldest value, divided by the difference in their times. I was originally using lower resolution rotary encoders and this method didn't work very well. I tried more complicated numerical differentiation approaches but they were all quite slow. Upgrading to higher resolution rotary encoders let me use this faster and simpler method.
 
 \end{document}
