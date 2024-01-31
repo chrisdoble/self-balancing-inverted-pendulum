@@ -316,4 +316,12 @@ If the cart gets too close to either end of the track or the pendulum angle beco
 
 The last significant part of the code is calculating the cart's velocity and the pendulum's angular velocity. On each iteration of the main loop we record the cart's position, the pendulum's angle, and the time. We store the last $10$ of these values and calculate the velocities as the difference between the most recent value and the oldest value, divided by the difference in their times. I was originally using lower resolution rotary encoders and this method didn't work very well. I tried more complicated numerical differentiation approaches but they were all quite slow. Upgrading to higher resolution rotary encoders let me use this faster and simpler method.
 
+\section{Conclusion}
+
+And that's how I built my self-balancing pendulum!
+
+The 3D models, code, notes, and everything else are available on GitHub which I've linked in the description.
+
+I hope you enjoyed the video, please let me know if you have any feedback or questions. Thanks!
+
 \end{document}
