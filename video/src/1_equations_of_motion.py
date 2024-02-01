@@ -3,6 +3,9 @@ from manim import (
     ArrowTriangleFilledTip,
     Circle,
     DashedLine,
+    DEFAULT_FONT_SIZE,
+    FadeIn,
+    FadeOut,
     LEFT,
     Line,
     MathTex,
@@ -22,12 +25,15 @@ from math import cos, sin
 from scipy.spatial.transform import Rotation
 import numpy as np
 
+LARGE_FONT_SIZE = DEFAULT_FONT_SIZE * 2
+
 
 class EquationsOfMotion(MovingCameraScene):
     def construct(self) -> None:
+        self.wait(4)
+
         # Cart
         cart = VGroup(Rectangle(height=1, width=2), MathTex("m_1")).shift([0, -1.5, 0])
-        self.add(cart)
 
         # Axes lines
         cart_right = cart.get_edge_center(RIGHT)
@@ -41,27 +47,29 @@ class EquationsOfMotion(MovingCameraScene):
         axis_lines = VMobject(stroke_color=WHITE)
         axis_lines.start_new_path(axis_lines_points[0])
         axis_lines.add_points_as_corners(axis_lines_points[1:])
-        self.add(axis_lines)
 
         # x axis tip
         x_axis_tip = ArrowTriangleFilledTip(
             fill_color=WHITE, length=0.2, start_angle=0, width=0.2
         ).next_to(axis_lines_points[2], RIGHT, buff=0)
-        self.add(x_axis_tip)
 
         # x axis label
         x_axis_label = MathTex("x").next_to(x_axis_tip, RIGHT, buff=0.1)
-        self.add(x_axis_label)
 
         # y axis tip
         y_axis_tip = ArrowTriangleFilledTip(
             fill_color=WHITE, length=0.2, start_angle=PI / 2, width=0.2
         ).next_to(axis_lines_points[0], UP, buff=0)
-        self.add(y_axis_tip)
 
         # y axis label
         y_axis_label = MathTex("y").next_to(y_axis_tip, UP, buff=0.1)
-        self.add(y_axis_label)
+
+        self.play(
+            FadeIn(axis_lines, x_axis_tip, x_axis_label, y_axis_tip, y_axis_label)
+        )
+        self.wait(2)
+        self.play(FadeIn(cart))
+        self.wait(2)
 
         # Dashed line between the cart and its origin
         cart_origin = np.add(cart.get_edge_center(LEFT), [-2.5, 0, 0])
@@ -72,7 +80,6 @@ class EquationsOfMotion(MovingCameraScene):
         cart_x_horizontal_line = DashedLine()
         update_cart_x_horizontal_line(cart_x_horizontal_line)
         cart_x_horizontal_line.add_updater(update_cart_x_horizontal_line)
-        self.add(cart_x_horizontal_line)
 
         # Label above the dashed line
         def update_cart_x_label(m: Mobject) -> None:
@@ -81,14 +88,17 @@ class EquationsOfMotion(MovingCameraScene):
         cart_x_label = MathTex("x")
         update_cart_x_label(cart_x_label)
         cart_x_label.add_updater(update_cart_x_label)
-        self.add(cart_x_label)
 
         # Marker at the cart's origin
         cart_x_vertical_line = Line(
             end=np.add(cart_origin, [0, -0.25, 0]),
             start=np.add(cart_origin, [0, 0.25, 0]),
         )
-        self.add(cart_x_vertical_line)
+
+        self.play(FadeIn(cart_x_horizontal_line, cart_x_label, cart_x_vertical_line))
+        self.wait(2)
+        self.play(cart.animate(rate_func=there_and_back).shift([-0.5, 0, 0]))
+        self.wait(4)
 
         # Pendulum properties
         pendulum_angle = ValueTracker(PI / 9)
@@ -109,7 +119,6 @@ class EquationsOfMotion(MovingCameraScene):
         pendulum_line = Line()
         update_pendulum_line(pendulum_line)
         pendulum_line.add_updater(update_pendulum_line)
-        self.add(pendulum_line)
 
         # Pendulum length label
         def update_pendulum_length_label(m: Mobject) -> None:
@@ -126,7 +135,6 @@ class EquationsOfMotion(MovingCameraScene):
         pendulum_length_label = MathTex("l")
         update_pendulum_length_label(pendulum_length_label)
         pendulum_length_label.add_updater(update_pendulum_length_label)
-        self.add(pendulum_length_label)
 
         # Pendulum mass
         def update_pendulum_mass(m: Mobject) -> None:
@@ -141,7 +149,9 @@ class EquationsOfMotion(MovingCameraScene):
         pendulum_mass = VGroup(Circle(0.4, color=WHITE), MathTex("m_2"))
         update_pendulum_mass(pendulum_mass)
         pendulum_mass.add_updater(update_pendulum_mass)
-        self.add(pendulum_mass)
+
+        self.play(FadeIn(pendulum_line, pendulum_length_label, pendulum_mass))
+        self.wait(2)
 
         # Vertical line
         def update_vertical_line(m: Mobject) -> None:
@@ -151,7 +161,6 @@ class EquationsOfMotion(MovingCameraScene):
         vertical_line = DashedLine()
         update_vertical_line(vertical_line)
         vertical_line.add_updater(update_vertical_line)
-        self.add(vertical_line)
 
         # Pendulum angle arc
         def update_pendulum_angle_arc(m: Mobject) -> None:
@@ -159,8 +168,6 @@ class EquationsOfMotion(MovingCameraScene):
 
         pendulum_angle_arc = Angle(vertical_line, pendulum_line)
         update_pendulum_angle_arc(pendulum_angle_arc)
-        pendulum_angle_arc.add_updater(update_pendulum_angle_arc)
-        self.add(pendulum_angle_arc)
 
         # Pendulum angle label
         def update_pendulum_angle_label(m: Mobject) -> None:
@@ -172,10 +179,11 @@ class EquationsOfMotion(MovingCameraScene):
         pendulum_angle_label = MathTex(r"\theta")
         update_pendulum_angle_label(pendulum_angle_label)
         pendulum_angle_label.add_updater(update_pendulum_angle_label)
-        self.add(pendulum_angle_label)
 
-        self.play(cart.animate(rate_func=there_and_back).shift([-0.5, 0, 0]))
+        self.play(FadeIn(vertical_line, pendulum_angle_arc, pendulum_angle_label))
+        pendulum_angle_arc.add_updater(update_pendulum_angle_arc)
         self.play(pendulum_angle.animate(rate_func=there_and_back).set_value(PI / 6))
+        self.wait(3)
 
         self.play(
             self.camera.frame.animate.move_to([9, -4, 0]).set(
@@ -183,6 +191,15 @@ class EquationsOfMotion(MovingCameraScene):
             ),
         )
 
-        self.play(cart.animate(rate_func=there_and_back).shift([-0.5, 0, 0]))
-        self.play(pendulum_angle.animate(rate_func=there_and_back).set_value(PI / 6))
+        self.wait(3)
+
+        # General Lagrangian formula
+        general_lagrangian = MathTex(
+            r"\mathcal{L} = T - U", font_size=LARGE_FONT_SIZE
+        ).move_to([12, -4, 0])
+        self.play(FadeIn(general_lagrangian))
+        self.wait(2)
+        self.play(FadeOut(general_lagrangian))
+        self.wait(2)
+
         self.wait()

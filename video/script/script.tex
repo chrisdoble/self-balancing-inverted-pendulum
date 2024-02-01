@@ -32,7 +32,7 @@ The math will make the most sense if you're familiar with calculus and a little 
 
 \section{Equations of Motion}
 
-If we want to control this system we need to know how it behaves when the cart's free to move, so let’s derive its equations of motion. First we need to define our coordinate system and variables in a diagram:
+If we want to control this system we need to know how it behaves, so let’s derive its equations of motion. First we need to define our coordinate system and variables in a diagram:
 
 \begin{figure}[H]
   \centering
@@ -62,9 +62,9 @@ If we want to control this system we need to know how it behaves when the cart's
   \end{tikzpicture}
 \end{figure}
 
-We have a cart of mass $m_1$ that can only move along the $x$-axis and its position $x$ is measured from some origin point. The cart is connected to a simple pendulum of length $l$ and mass $m_2$ which is at an angle $\theta$ from vertical.
+We have a cart of mass $m_1$. Its $x$ position is measured from some origin point and it can only move along the $x$-axis. The cart is connected to a simple pendulum of length $l$ and mass $m_2$ and it's at an angle $\theta$ from vertical.
 
-With that out of the way, now we can calculate the Lagrangian of the system which is defined as the difference between its kinetic and potential energies: $\mathcal{L} = T - U$. Well, what are those energies?
+With that out of the way, now we can calculate the Lagrangian of the system. The Lagrangian is defined as the difference between the system's kinetic and potential energies: $\mathcal{L} = T - U$. Well, what are those energies?
 
 Starting with the cart, its kinetic energy is \[T_\text{cart} = \frac{1}{2} m_1 v^2\] but because it can only move along the $x$-axis its velocity has no $y$ component this is equivalent to \[T_\text{cart} = \frac{1}{2} m_1 \dot{x}^2\] I'm going to use Newton's notation for derivatives so when you see a dot or a double dot over a variable that's what that means. As for the cart's potential energy, it can't move up or down so its gravitational potential energy can't change and there's no springs or anything involved so we might as well set it to \[U_\text{cart} = 0.\]
 
