@@ -1,10 +1,10 @@
 .PHONY: all
 all: type_check
-	manim src/1_equations_of_motion.py EquationsOfMotion
+	manim --preview --verbosity WARNING src/1_equations_of_motion.py EquationsOfMotion
 
 .PHONY: type_check
 type_check:
-	mypy src
+	mypy --no-error-summary src
 
 .PHONY: clean
 clean:
