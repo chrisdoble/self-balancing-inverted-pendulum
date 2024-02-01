@@ -1,18 +1,21 @@
 from manim import (
     Angle,
+    ArrowTriangleFilledTip,
     Circle,
     DashedLine,
     LEFT,
     Line,
     MathTex,
     Mobject,
+    MovingCameraScene,
     Rectangle,
-    Scene,
     there_and_back,
     PI,
+    RIGHT,
     UP,
     ValueTracker,
     VGroup,
+    VMobject,
     WHITE,
 )
 from math import cos, sin
@@ -20,11 +23,45 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 
 
-class EquationsOfMotion(Scene):
+class EquationsOfMotion(MovingCameraScene):
     def construct(self) -> None:
         # Cart
-        cart = VGroup(Rectangle(height=1, width=2), MathTex("m_1")).shift([0, -1, 0])
+        cart = VGroup(Rectangle(height=1, width=2), MathTex("m_1")).shift([0, -1.5, 0])
         self.add(cart)
+
+        # Axes lines
+        cart_right = cart.get_edge_center(RIGHT)
+        axes_buffer = 1.5
+        axes_size = 0.5
+        axis_lines_points = [
+            np.add(cart_right, [axes_buffer, axes_size, 0]),
+            np.add(cart_right, [axes_buffer, 0, 0]),
+            np.add(cart_right, [axes_buffer + axes_size, 0, 0]),
+        ]
+        axis_lines = VMobject(stroke_color=WHITE)
+        axis_lines.start_new_path(axis_lines_points[0])
+        axis_lines.add_points_as_corners(axis_lines_points[1:])
+        self.add(axis_lines)
+
+        # x axis tip
+        x_axis_tip = ArrowTriangleFilledTip(
+            fill_color=WHITE, length=0.2, start_angle=0, width=0.2
+        ).next_to(axis_lines_points[2], RIGHT, buff=0)
+        self.add(x_axis_tip)
+
+        # x axis label
+        x_axis_label = MathTex("x").next_to(x_axis_tip, RIGHT, buff=0.1)
+        self.add(x_axis_label)
+
+        # y axis tip
+        y_axis_tip = ArrowTriangleFilledTip(
+            fill_color=WHITE, length=0.2, start_angle=PI / 2, width=0.2
+        ).next_to(axis_lines_points[0], UP, buff=0)
+        self.add(y_axis_tip)
+
+        # y axis label
+        y_axis_label = MathTex("y").next_to(y_axis_tip, UP, buff=0.1)
+        self.add(y_axis_label)
 
         # Dashed line between the cart and its origin
         cart_origin = np.add(cart.get_edge_center(LEFT), [-2.5, 0, 0])
@@ -48,15 +85,14 @@ class EquationsOfMotion(Scene):
 
         # Marker at the cart's origin
         cart_x_vertical_line = Line(
-            start=np.add(cart_origin, [0, 0.25, 0]),
             end=np.add(cart_origin, [0, -0.25, 0]),
+            start=np.add(cart_origin, [0, 0.25, 0]),
         )
         self.add(cart_x_vertical_line)
 
         # Pendulum properties
         pendulum_angle = ValueTracker(PI / 9)
         pendulum_length = 3
-        pendulum_mass_radius = 0.4
 
         # Pendulum line
         def update_pendulum_line(m: Mobject) -> None:
@@ -97,13 +133,12 @@ class EquationsOfMotion(Scene):
             m.move_to(
                 np.add(
                     pendulum_line.get_end(),
-                    pendulum_line.get_unit_vector() * pendulum_mass_radius,
+                    pendulum_line.get_unit_vector()
+                    * pendulum_mass.submobjects[0].radius,
                 )
             )
 
-        pendulum_mass = VGroup(
-            Circle(pendulum_mass_radius, stroke_color=WHITE), MathTex("m_2")
-        )
+        pendulum_mass = VGroup(Circle(0.4, color=WHITE), MathTex("m_2"))
         update_pendulum_mass(pendulum_mass)
         pendulum_mass.add_updater(update_pendulum_mass)
         self.add(pendulum_mass)
@@ -139,7 +174,15 @@ class EquationsOfMotion(Scene):
         pendulum_angle_label.add_updater(update_pendulum_angle_label)
         self.add(pendulum_angle_label)
 
-        self.wait()
+        self.play(cart.animate(rate_func=there_and_back).shift([-0.5, 0, 0]))
+        self.play(pendulum_angle.animate(rate_func=there_and_back).set_value(PI / 6))
+
+        self.play(
+            self.camera.frame.animate.move_to([9, -4, 0]).set(
+                height=self.camera.frame.height * 2
+            ),
+        )
+
         self.play(cart.animate(rate_func=there_and_back).shift([-0.5, 0, 0]))
         self.play(pendulum_angle.animate(rate_func=there_and_back).set_value(PI / 6))
         self.wait()
