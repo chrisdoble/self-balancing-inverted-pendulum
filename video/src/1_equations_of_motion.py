@@ -342,7 +342,7 @@ class EquationsOfMotion(MovingCameraScene):
         lagrangian = MathTex(
             r"\mathcal{L} = \frac{1}{2} (m_1 + m_2) \dot{x}^2 + \frac{1}{2} m_2 (l^2 \dot{\theta}^2 - 2 l \dot{\theta} \dot{x} \cos \theta) - m_2 g l \cos \theta",
             font_size=LARGE_FONT_SIZE,
-        ).move_to([9, -6, 0])
+        ).move_to([9, -5, 0])
         self.play(
             FadeOut(
                 cart_kinetic_energy_2,
@@ -351,6 +351,40 @@ class EquationsOfMotion(MovingCameraScene):
                 pendulum_potential_energy,
             ),
             FadeIn(lagrangian),
+        )
+        self.wait(3)
+
+        # Euler-Lagrange
+        euler_lagrange = MathTex(
+            r"\frac{\partial \mathcal{L}}{\partial q} - \frac{d}{d t} \frac{\partial \mathcal{L}}{\partial \dot{q}} = 0",
+            font_size=LARGE_FONT_SIZE,
+        ).next_to(lagrangian, DOWN, buff=0.75)
+        self.play(FadeIn(euler_lagrange))
+        self.wait(3)
+
+        # Apply Euler-Lagrange to theta
+        euler_lagrange_theta = MathTex(
+            r"{{l \ddot{\theta} - \ddot{x} \cos \theta - g \sin \theta = 0}}",
+            font_size=LARGE_FONT_SIZE,
+        ).move_to([9, -5, 0])
+        self.play(FadeOut(lagrangian, euler_lagrange), FadeIn(euler_lagrange_theta))
+        self.wait(2)
+
+        # Apply Euler-Lagrange to x
+        euler_lagrange_x = MathTex(
+            r"(m_1 + m_2) \ddot{x} - m_2 l \ddot{\theta} \cos \theta + m_2 l \dot{\theta}^2 \sin \theta = 0",
+            font_size=LARGE_FONT_SIZE,
+        ).move_to([9, -6.5, 0])
+        self.play(FadeIn(euler_lagrange_x))
+        self.wait(5)
+
+        # Equations of motion
+        equations_of_motion = MathTex(
+            r"\ddot{\theta} & = \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\ \ddot{x}      & = \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}",
+            font_size=LARGE_FONT_SIZE,
+        ).move_to([9, -6.5, 0])
+        self.play(
+            FadeOut(euler_lagrange_theta, euler_lagrange_x), FadeIn(equations_of_motion)
         )
 
         self.wait()

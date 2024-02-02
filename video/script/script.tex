@@ -74,7 +74,7 @@ Next, the pendulum. Because it's joined to the cart its $x$ coordinate changes a
 \end{align*} Differentiating them with respect to time gives the $x$ and $y$ components of the pendulum's velocity \begin{align*}
   \dot{X} & = \dot{x} - l \dot{\theta} \cos \theta \\
   \dot{Y} & = -l \dot{\theta} \sin \theta.
-\end{align*} Using the Pythagorean theorem we can combine these to find the squared magnitude of the pendulum's velocity \begin{align*}
+\end{align*} Using the Pythagorean theorem we can combine these to find the squared magnitude of its velocity \begin{align*}
   V^2 & = \dot{X}^2 + \dot{Y}^2                                                      \\
       & = (\dot{x} - l \dot{\theta} \cos \theta)^2 + (-l \dot{\theta} \sin \theta)^2 \\
       & = \dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2
@@ -82,7 +82,7 @@ Next, the pendulum. Because it's joined to the cart its $x$ coordinate changes a
 and we can use this to find its kinetic energy \begin{align*}
 T_\text{pendulum} & = \frac{1}{2} m_2 V^2                                                                          \\
                     & = \frac{1}{2} m_2 (\dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2).
-\end{align*} Unlike the cart, the pendulum's potential energy can change — as we saw, when it rotates it moves up and down so its gravitational potential energy changes. If we say its potential energy is $0$ when it's horizontal, then we can define its potential energy like this \[U_\text{pendulum} = m_2 g l \cos \theta\] where $g$ is the acceleration due to gravity.
+\end{align*} Unlike the cart, the pendulum's potential energy can change — as we saw, when it rotates it moves up and down so its gravitational potential energy changes. If we say its potential energy is $0$ when it's horizontal, then we can define its potential energy like this \[U_\text{pendulum} = m_2 g l \cos \theta\] where $g$ is acceleration due to gravity.
 
 Combining all of those energies and rearranging gives us our Lagrangian \begin{align*}
   \mathcal{L} & = T - U                                                                                                                                     \\
@@ -91,11 +91,11 @@ Combining all of those energies and rearranging gives us our Lagrangian \begin{a
               & = \frac{1}{2} (m_1 + m_2) \dot{x}^2 + \frac{1}{2} m_2 (l^2 \dot{\theta}^2 - 2 l \dot{\theta} \dot{x} \cos \theta) - m_2 g l \cos \theta.
 \end{align*}
 
-Now that we have the Lagrangian we can apply the Euler-Lagrange equation to each of the system's two coordinates $\theta$ and $x$. For $\theta$ we get \begin{align*}
+Now that we have it we can apply the Euler-Lagrange equation to each of the system's two coordinates $\theta$ and $x$. For $\theta$ we get this \begin{align*}
   0 & = \frac{d}{d t} \frac{\partial \mathcal{L}}{\partial \dot{\theta}} - \frac{\partial \mathcal{L}}{\partial \theta}                 \\
     & = \frac{d}{d t} (m_2 l^2 \dot{\theta} - m_2 l \dot{x} \cos \theta) - m_2 l \dot{\theta} \dot{x} \sin \theta - m_2 g l \sin \theta \\
     & = l \ddot{\theta} - \ddot{x} \cos \theta - g \sin \theta
-\end{align*} and for $x$ we get \begin{align*}
+\end{align*} and for $x$ we get this \begin{align*}
   0 & = \frac{d}{d t} \frac{\partial L}{\partial \dot{x}} - \frac{\partial \mathcal{L}}{\partial x} \\
     & = \frac{d}{d t} [(m_1 + m_2) \dot{x} - m_2 l \dot{\theta} \cos \theta]                        \\
     & = (m_1 + m_2) \ddot{x} - m_2 l \ddot{\theta} \cos \theta + m_2 l \dot{\theta}^2 \sin \theta.
