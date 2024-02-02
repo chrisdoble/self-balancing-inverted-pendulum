@@ -1,6 +1,6 @@
 .PHONY: all
 all: type_check
-	manim ${MANIM_ARGS} --verbosity WARNING src/1_equations_of_motion.py EquationsOfMotion
+	manim ${MANIM_ARGS} --verbosity WARNING src/2_equations_of_motion.py EquationsOfMotion
 
 .PHONY: clean
 clean:
