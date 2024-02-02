@@ -68,10 +68,10 @@ With that out of the way, now we can calculate the Lagrangian of the system. The
 
 Starting with the cart, its kinetic energy is \[T_\text{cart} = \frac{1}{2} m_1 v^2\] but because it can only move along the $x$-axis its velocity has no $y$ component this is equivalent to \[T_\text{cart} = \frac{1}{2} m_1 \dot{x}^2\] I'm going to use Newton's notation for derivatives so when you see a dot or a double dot over a variable that's what that means. As for the cart's potential energy, it can't move up or down so its gravitational potential energy can't change and there's no springs or anything involved so we might as well set it to \[U_\text{cart} = 0.\]
 
-Next, the pendulum. Because it's joined to the cart its $x$ coordinate changes as cart moves, and both of its coordinates change as it rotates. We can write its coordinates as \begin{align*}
+Next, the pendulum. Because it's joined to the cart its $x$ coordinate changes as the cart moves, and both of its coordinates change as it rotates. That being the case, its coordinates are given by these equations \begin{align*}
   X & = x - l \sin \theta \\
   Y & = l \cos \theta.
-\end{align*} Differentiating these equations with respect to time gives the $x$ and $y$ components of the pendulum's velocity \begin{align*}
+\end{align*} Differentiating them with respect to time gives the $x$ and $y$ components of the pendulum's velocity \begin{align*}
   \dot{X} & = \dot{x} - l \dot{\theta} \cos \theta \\
   \dot{Y} & = -l \dot{\theta} \sin \theta.
 \end{align*} Using the Pythagorean theorem we can combine these to find the squared magnitude of the pendulum's velocity \begin{align*}
@@ -82,12 +82,9 @@ Next, the pendulum. Because it's joined to the cart its $x$ coordinate changes a
 and we can use this to find its kinetic energy \begin{align*}
 T_\text{pendulum} & = \frac{1}{2} m_2 V^2                                                                          \\
                     & = \frac{1}{2} m_2 (\dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2).
-\end{align*} Unlike the cart, the pendulum's potential energy can change — as we saw, when it rotates it moves up and down so its gravitational potential energy changes. If we say its potential energy is $0$ when its $y$ coordinate is $0$, then we can define its potential energy to be \begin{align*}
-  U_\text{pendulum} & = m_2 g y              \\
-                    & = m_2 g l \cos \theta.
-\end{align*}
+\end{align*} Unlike the cart, the pendulum's potential energy can change — as we saw, when it rotates it moves up and down so its gravitational potential energy changes. If we say its potential energy is $0$ when it's horizontal, then we can define its potential energy like this \[U_\text{pendulum} = m_2 g l \cos \theta\] where $g$ is the acceleration due to gravity.
 
-Combining all of those energies gives a Lagrangian of \begin{align*}
+Combining all of those energies and rearranging gives us our Lagrangian \begin{align*}
   \mathcal{L} & = T - U                                                                                                                                     \\
               & = T_\text{cart} + T_\text{pendulum} - U_\text{cart} - U_\text{pendulum}                                                                     \\
               & = \frac{1}{2} m_1 \dot{x}^2 + \frac{1}{2} m_2 (\dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2) - m_2 g l \cos \theta \\
