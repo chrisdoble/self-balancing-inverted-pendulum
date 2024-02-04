@@ -127,18 +127,13 @@ So how do we linearise our equations of motion? First, let's combine them into o
   \end{bmatrix} = \vec{f}(\theta, \dot{\theta}) = \begin{bmatrix}
     \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
     \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
-\end{bmatrix}.\] Let's also introduce the state vector $\vec{x}$ which describes the state of the system \[\vec{x} = \begin{bmatrix}
-    \theta       \\
-    \dot{\theta} \\
-    x            \\
-    \dot{x}
-\end{bmatrix}.\] Now we can change our function to just accept the state vector $\vec{x}$ \[\begin{bmatrix}
+\end{bmatrix}.\] Let's also define the state vector $\vec{x}$ to be a column matrix describing the state of the system and containing the elements $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$. With this definition we can change our function to just accept the state vector $\vec{x}$ \[\begin{bmatrix}
     \ddot{\theta} \\
     \ddot{x}
   \end{bmatrix} = \vec{f}(\vec{x}) = \begin{bmatrix}
     \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
     \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
-\end{bmatrix}\] and if we include $\dot{\theta}$ and $\dot{x}$ in the output you can see that the function now returns the derivative of $\vec{x}$ \begin{align*}
+\end{bmatrix}.\] If we include $\dot{\theta}$ and $\dot{x}$ in the output you can see that the function now returns the derivative of $\vec{x}$ \begin{align*}
   \begin{bmatrix}
     \dot{\theta}  \\
     \ddot{\theta} \\
@@ -158,31 +153,16 @@ So how do we linearise our equations of motion? First, let's combine them into o
                                           \end{bmatrix}.
 \end{align*}
 
-The general equation to linearise a function like this is at a particular point $\vec{p}$ is \[\vec{f}(\vec{x}) \approx f(\vec{p}) + D \vec{f}|_{\vec{p}} (\vec{x} - \vec{p}).\] As I mentioned before we want to linearise our function at the point where all the elements of $\vec{x}$ are $0$. That means $\vec{p}$ is the zero vector \[\vec{f}(\vec{x}) \approx f \left( \begin{bmatrix}
-      0 \\
-      0 \\
-      0 \\
-      0
-    \end{bmatrix} \right) + D \vec{f}|_{\vec{p}} \left( \vec{x} - \begin{bmatrix}
-    0 \\
-    0 \\
-    0 \\
-    0
-\end{bmatrix} \right).\] Looking at the equations within $\vec{f}(\vec{x})$ you can see that at the point $\vec{p}$, $\dot{\theta}$ is $0$, the numerator of $\ddot{\theta}$ has a common term of $\sin \theta$ which is also $0$, $\dot{x}$ is $0$, and the numerator of $\ddot{x}$ contains the terms $\sin 2 \theta$ and $\sin \theta$, both of which are $0$. So $\vec{f}(\vec{p})$ is also the zero vector and we can remove it from our linearised function \[\vec{f}(\vec{x}) \approx D \vec{f}|_{\vec{p}} \vec{x}.\]
+This is the general equation to linearise a function like this at a particular point $\vec{p}$ \[\vec{f}(\vec{x}) \approx f(\vec{p}) + D \vec{f}|_{\vec{p}} (\vec{x} - \vec{p}).\] As I mentioned before we want to linearise our function at the point where all the elements of $\vec{x}$ are $0$. That means $\vec{p}$ is the zero vector \[\vec{f}(\vec{x}) \approx f(\vec{0}) + D \vec{f}|_{\vec{0}} (\vec{x} - \vec{0}).\] Looking at the elements within $\vec{f}(\vec{x})$ you can see that this point, $\dot{\theta}$ is $0$ so the first element is $0$. The numerator of the second element has a common term of $\sin \theta$ which is also $0$. $\dot{x}$ is $0$ so the third element is $0$. Finally, the numerator of the fourth element contains the terms $\sin 2 \theta$ and $\sin \theta$, both of which are $0$. So $\vec{f}(\vec{x})$ evaluated at the point $\vec{p}$ is also the zero vector and we can remove it from our linearised function \[\vec{f}(\vec{x}) \approx D \vec{f}|_{\vec{0}} \vec{x}.\]
 
-$D \vec{f}$ is called the Jacobian matrix of our function and $D \vec{f}|_{\vec{p}}$ is it evaluated at the point $\vec{p}$. It plays the same role the derivative did in the previous two-dimensional example — when you multiply it by a displacement vector $\vec{x}$ it tells you how much each component of the function differs from the point at which it was linearised. It's like extending the slope in each dimension. If we actually evaluate this at the point $\vec{p}$ we get \[D \vec{f}|_{\vec{p}} = \begin{bmatrix}
-    0                           & 1 & 0 & 0 \\
-    \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
-    0                           & 0 & 0 & 1 \\
-    \frac{g m_2}{m_1}           & 0 & 0 & 0
-\end{bmatrix}.\] I'm going to call this matrix $\vec{A}$ which means the linearised version of our function is \[\dvec{x} = \vec{A} \vec{x} = \begin{bmatrix}
+The remaining term is the Jacobian matrix of our function evaluated at the point $\vec{p}$. It plays the same role the derivative did in the previous two-dimensional example — when you multiply it by a displacement vector $\vec{x}$ it tells you how much each component of the function differs from the point at which it was linearised. It's like extending the slope in each dimension. If we actually evaluate it at the point $\vec{p}$ we get a matrix that we'll call $\vec{A}$, and the final linearised version of our function is \[\dvec{x} = \vec{A} \vec{x} = \begin{bmatrix}
     0                           & 1 & 0 & 0 \\
     \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
     0                           & 0 & 0 & 1 \\
     \frac{g m_2}{m_1}           & 0 & 0 & 0
   \end{bmatrix} \vec{x}.\]
 
-I've intentionally skimmed over some details in this section in the interests of time. If you'd like to learn more about linearising nonlinear systems and when it's actually valid to do that, these two videos from Steve Brunton are really great: \href{https://www.youtube.com/watch?v=RCWkzzLgwf0}{Linearizing Nonlinear Differential Equations Near a Fixed Point}, and \href{https://www.youtube.com/watch?v=vRaUSnB7qNw}{The Hartman-Grobman Theorem, Structural Stability of Linearization, and Stable/Unstable Manifolds}.
+I've intentionally skimmed over some details in this section in the interests of time. If you'd like to learn more about linearising nonlinear systems and when it's actually valid to do that, these two videos from Steve Brunton are great: \href{https://www.youtube.com/watch?v=RCWkzzLgwf0}{Linearizing Nonlinear Differential Equations Near a Fixed Point}, and \href{https://www.youtube.com/watch?v=vRaUSnB7qNw}{The Hartman-Grobman Theorem, Structural Stability of Linearization, and Stable/Unstable Manifolds}.
 
 \section{Stability}
 
