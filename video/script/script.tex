@@ -170,15 +170,13 @@ Now that we have a linearised version of our equations of motion we can apply so
 
 \section{Control}
 
-I mentioned earlier that the cart moves left and right to keep the pendulum upright. A more formal way to say that is: we can say we apply a force $F$ on the cart in the $x$ direction. We can recalculate our equations of motion to include this force, the only difference is we apply d'Alembert's principle to the Euler-Lagrange equation for the $x$ coordinate and equate it to $F$. This results in the following updated equations of motion where I've hidden some terms so we can focus on the coefficients of $F$ \begin{align*}
+I mentioned earlier that the cart moves left and right to keep the pendulum upright. A more formal of saying that is: we can say we apply a force $F$ on the cart in the $x$ direction. We can recalculate our equations of motion to include this force, the only difference is we apply d'Alembert's principle to the Euler-Lagrange equation for the $x$ coordinate and equate it to $F$. This results in the following updated equations of motion where I've hidden some terms so we can focus on the coefficients of $F$ \begin{align*}
   \ddot{\theta} & = f(\theta, \dot{\theta}) + \frac{\cos \theta}{l (m_1 + m_2) - l m_2 \cos^2 \theta} F \\
   \ddot{x}      & = g(\theta, \dot{\theta}) + \frac{2}{2 m_1 + m_2 - m_2 \cos 2 \theta} F.
-\end{align*} Again, our goal is for $\theta$ to be close to $0$ so we can use the small angle approximation where $\cos \theta = 1$ and that gives the simplified equations \begin{align*}
+\end{align*} Again, our goal is for $\theta$ to be close to $0$ so we can use the small angle approximation where $\cos \theta$ is replaced with $1$. That simplifies these equations a little \begin{align*}
   \ddot{\theta} & = f(\theta, \dot{\theta}) + \frac{1}{l m_1} F \\
   \ddot{x}      & = g(\theta, \dot{\theta}) + \frac{1}{m_1} F.
-\end{align*} If we use the coefficients of $F$ to create a new matrix $\vec{B}$ and substitute this into our linearised equations of motion we get \begin{align*}
-  \dvec{x} & = \vec{A} \vec{x} + \vec{B} F              \\
-           & = \begin{bmatrix}
+\end{align*} If we use the coefficients of $F$ to create a new matrix $\vec{B}$ and substitute this into our linearised equations of motion we get \[\dvec{x} = \vec{A} \vec{x} + \vec{B} F = \begin{bmatrix}
                  0                           & 1 & 0 & 0 \\
                  \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
                  0                           & 0 & 0 & 1 \\
@@ -188,14 +186,13 @@ I mentioned earlier that the cart moves left and right to keep the pendulum upri
                                          \frac{1}{l m_1} \\
                                          0               \\
                                          \frac{1}{m_1}
-                                       \end{bmatrix} F.
-\end{align*}
+\end{bmatrix} F.\] Let's hide the right hand side of this equation just to keep things simple.
 
 Another useful tool from control theory is the concept of controllability. A system is said to be controllable if it's possible to move it into any state you want using only its inputs. In our case, the only input is $F$ — is that enough to control the system? It is if the rank of the controllability matrix equals the dimension of the state space \[\rank(\vec{C}) = \rank(\begin{bmatrix}
       \vec{B} & \vec{A} \vec{B} & \vec{A}^2 \vec{B} & \cdots & \vec{A}^{n - 1} \vec{B}
-    \end{bmatrix}) = n.\] If we perform this calculation using our $\vec{A}$ and $\vec{B}$ matrices we get the value $4$. This is the dimension of our state vector and so we can control the system using the force $F$.
+\end{bmatrix}) = n.\] If we perform this calculation using our $\vec{A}$ and $\vec{B}$ matrices we get the value $4$. This is the dimension of our state vector which means we are able to control the system using only the force $F$.
 
-Now we have a way to control the system, but how do we choose $F$? Obviously we want it to be a function of the state of the system — for example, if the pendulum is close to vertical we want to apply a small force but if it's far from vertical we want to apply a larger force. This suggests we could define it as \[F = \vec{K} \vec{x}\] where $\vec{K}$ is a row matrix. Conventionally this is written as \[F = -\vec{K} \vec{x}.\]
+Now we have a way to control the system, but how do we choose $F$? We want it to be a function of the state of the system — for example, if the pendulum is close to vertical we want to apply a small force but if it's far from vertical we want to apply a larger force. This suggests we could define it as a row matrix $\vec{K}$ times the state vector $\vec{x}$ \[F = \vec{K} \vec{x}.\] Conventionally this is written with a minus sign \[F = -\vec{K} \vec{x}.\]
 
 If we substitute this into our linearised equation of motion we get \begin{align*}
   \dvec{x} & = \vec{A} \vec{x} - \vec{B} \vec{K} \vec{x} \\
