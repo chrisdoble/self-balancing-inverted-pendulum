@@ -22,7 +22,7 @@
 \newcommand{\dvec}[1]{\dot{\vec{#1}}}
 
 \title{How I Made a Self-Balancing Inverted Pendulum}
-\author{Chris Doble}
+\author{Chris Doble \\ chris@chrisdoble.com}
 \date{February 2024}
 
 \begin{document}
@@ -230,21 +230,46 @@ So how do we choose $\vec{K}$? One approach is to use the Linear Quadratic Regul
   \includegraphics[width=\textwidth]{controlled}
 \end{figure}
 
-The cart quickly moves to the left to prevent the pendulum from falling, continues moving until the pendulum is slightly angled to the right, then slowly moves to the right until the cart is in the middle of the track and the pendulum is vertical.
+The cart quickly moves to the left to prevent the pendulum from falling, continues moving until the pendulum is slightly angled to the right, then slowly moves to the right until the cart is in the middle of the track and the pendulum is vertical. The notebook also generates an animation which you can see \href{https://github.com/chrisdoble/self-balancing-inverted-pendulum/blob/master/post/images/controlled.gif}{here}.
 
-\section{Building}
+\section{Construction}
 
-That's enough math for now. Let's talk about how I built it!
+That's enough math for now. Let's talk about the physical construction.
 
-This is a model of the system that I designed in Fusion 360. At the core are two steel rods that the cart slides along on linear bearings. The cart itself and the two ends are 3D printed in PLA. On the bottom of the cart are two extensions that the timing belt connects to, but it's not visible in this model. The timing belt comes from one side of the cart, over the ilder pulley, all the way over to the timing pulley, and back to the other side of the cart. This means that when the timing pulley rotates, the cart moves.
+At its core are two steel rods that the cart slides along on linear bearings. The cart itself and the two ends are 3D printed in PLA.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{construction_1}
+\end{figure}
+
+On the bottom of the cart are two extensions that the timing belt connects to. The timing belt comes from one side of the cart, over the ilder pulley, all the way over to the timing pulley, and back to the other side of the cart. This means that when the timing pulley rotates, the cart moves.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5 \textwidth]{construction_2}
+\end{figure}
 
 The timing pulley is on an axle that's connected to an incremental rotary encoder so we can measure the position of the cart. On the other side of the axle is a 3D printed 5:1 gear train that's connected to a DC motor. I had to add the gear train because I bought a 24V motor which ended up being overkill for this project and I needed a way to reduce the RPM. On top of the housing is a limit switch which is primarily used to zero the cart position on startup, but it's also used to kill the motor if the cart gets too close to the end.
 
+\begin{figure}[H]
+  \begin{minipage}{0.45 \textwidth}
+    \includegraphics[width=\textwidth]{construction_3}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.45 \textwidth}
+    \includegraphics[width=\textwidth]{construction_4}
+  \end{minipage}
+\end{figure}
+
 The pendulum itself is a long steel rod connected to a shorter steel rod with a 90° clamp. The shorter rod runs through some bearings and to another incremental rotary encoder that lets us measure the angle of the pendulum.
 
-The system is all controlled by an Arduino Uno, the motor is controlled by a motor driver which is connected to a 24V power supply, and everything is connected via a breadboard.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5 \textwidth]{construction_5}
+\end{figure}
 
-After printing and assembling everything this is what it looks like. You can see that there are some long wires connected to the cart so it can move around.
+The system is all controlled by an Arduino Uno, the motor is controlled by a motor driver which is connected to a 24V power supply, and everything is connected via a breadboard.
 
 \section{Motor Control}
 
@@ -261,59 +286,66 @@ Great! We have our control algorithm and we've built the physical system, but th
   \end{circuitikz}
 \end{figure}
 
-We can model the electrical properties of a DC motor using this simple circuit. $V_\text{in}$ is the voltage applied to the motor, $R$ is the resistance of its windings, $L$ is the inductance of its windings, and $V_\text{motor}$ is the back emf generated as the motor is spinning. Applying Kirchoff's voltage law to this circuit gives \[V_\text{in} - I R - \frac{d I}{d t} L - V_\text{motor} = 0.\] If we assume the back emf is proportional to the motor's angular velocity $\omega$ the final term becomes $a_1 \omega$ where $a_1$ is a proportionality constant \[V_\text{in} - I R - \frac{d I}{d t} L - a_1 \omega = 0.\]
+We can model the electrical properties of a DC motor using this simple circuit. $V_\text{in}$ is the voltage applied to the motor, $R$ is the resistance of its windings, $L$ is the inductance of its windings, and $V_\text{motor}$ is the back emf generated as the motor is spinning. Applying Kirchoff's voltage law to this circuit gives \[V_\text{in} - I R - \frac{d I}{d t} L - V_\text{motor} = 0.\] If we assume the back emf is proportional to the motor's angular velocity $\omega$ this becomes \[V_\text{in} - I R - \frac{d I}{d t} L - a_1 \omega = 0\] where $a_1$ is a proportionality constant.
 
-We can model the mechanical properties of a DC motor by treating it as a rotating cylinder. It experiences a torque from the motor $\tau_m$ and a resistive torque $\tau_r$ from back emf, friction, etc. This gives an equation of motion \[\tau_m - \tau_r = J \dot{\omega}\] where $J$ is the cylinder's moment of inertia. If we assume the torque from the motor is proportional to the current flowing through it this becomes \[a_2 I - \tau_r = J \dot{\omega}\] and if we further assume that the resistive torque is proportional to the cylinder's angular velocity this becomes \[a_2 I - a_3 \omega = J \dot{\omega}.\]
+We can model the mechanical properties of a DC motor by treating it as a rotating cylinder. It experiences a torque from the motor $\tau_m$ and a resistive torque $\tau_r$ from back emf, friction, etc. This gives an equation of motion \[\tau_m - \tau_r = J \dot{\omega}\] where $J$ is the cylinder's moment of inertia. If we assume the torque from the motor is proportional to the current flowing through it and the resistive torque is proportional to the cylinder's angular velocity this becomes \[a_2 I - a_3 \omega = J \dot{\omega}\] where $a_2$ and $a_3$ are proportionality constants.
 
-We can solve this equation of motion for $I$ and take the derivative of that expression to find one for $\frac{d I}{d t}$. If we substitute these into the electrical equation and collect constants we get \[b_1 \ddot{\omega} + b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0\] which has the general solution \[\omega = c_1 V_\text{in} + c_2 e^{c_3 t} + c_4 e^{c_5 t}.\]
+We can solve this equation of motion for $I$ \[I = \frac{1}{a_2} (a_3 \omega + J \dot{\omega})\] and take the derivative with respect to time to find \[\frac{d I}{d t} = \frac{1}{a_2} (a_3 \dot{\omega} + J \ddot{\omega}).\] If we substitute these into the electrical equation and collect constants we get \[b_1 \ddot{\omega} + b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0\] which has the general solution \[\omega = c_1 V_\text{in} + c_2 e^{c_3 t} + c_4 e^{c_5 t}.\]
 
-Taking a step back, what does this equation represent? It tells us how the motor's angular velocity changes over time if we apply a constant voltage $V_\text{in}$. Can we use our intuition about how the motor behaves to give us any clues about these constants? First of all, we probably don't need two exponential terms, so let's assume $c_4$ is $0$ \[\omega = c_1 V_\text{in} + c_2 e^{c_3 t}.\] Next, the motor's angular velocity is $0$ at $t = 0$ so $c_2 = -c_1 V_\text{in}$ \[\omega = c_1 V_\text{in} (1 - e^{c_3 t}).\] We also know that if we apply a constant voltage the motor's angular velocity will increase quite quickly but then resistive forces cause it to stabilise around a steady state value. If that's the case $c_3$ must be negative, otherwise the angular velocity would decrease exponentially forever. Finally, if we multiply both sides of the equation by the radius of the timing pulley we get the velocity of the cart instead of the angular velocity of the motor which will make things a little easier for us in an upcoming step \[v = d_1 V_\text{in} (1 - e^{-d_2 t}), \ d_2 > 0.\]
+Taking a step back, what does this equation represent? It tells us how the motor's angular velocity changes over time if we apply a constant voltage $V_\text{in}$. Can we use our intuition about how the motor behaves to give us any clues about these constants? First of all, we probably don't need two exponential terms, so let's assume $c_4$ is $0$ \[\omega = c_1 V_\text{in} + c_2 e^{c_3 t}.\] Next, the motor's angular velocity is $0$ at $t = 0$ so $c_2 = -c_1 V_\text{in}$ \[\omega = c_1 V_\text{in} (1 - e^{c_3 t}).\] We also know that if we apply a constant voltage the motor's angular velocity will increase quite quickly but then resistive forces cause it to stabilise around a steady state value. If that's the case $c_3$ must be negative, otherwise the angular velocity would decrease exponentially forever. Finally, if we multiply both sides of the equation by the radius of the timing pulley we get the velocity of the cart instead of the angular velocity of the motor which will make things a little easier for us later \[v = d_1 V_\text{in} (1 - e^{-d_2 t}), \ d_2 > 0.\]
 
 This is the general equation for the cart's velocity over time at particular input voltage. In order to use it for our pendulum we need to find the values of the constants $d_1$ and $d_2$ for our motor. We can do this by collecting data on the motor's behaviour at different voltages and fitting our model to that data.
 
-This is a Mathematica notebook I created to do just that. Here you can see the cart's velocity over time for 14 different voltages, some forwards, some backwards. Other than this blip around $\qty{0.5}{s}$ it looks as we would expect.
+\href{https://github.com/chrisdoble/self-balancing-inverted-pendulum/blob/master/notebooks/motor.nb}{Here} is a Mathematica notebook that does just that. First it plots cart's velocity over time for 14 different voltages, some forwards, some backwards. Other than a blip at around $\qty{0.45}{s}$ it looks as we would expect.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{angular_velocities}
+\includegraphics[width=\textwidth]{velocities}
 \end{figure}
 
-Mathematica's \texttt{FindFit} function can be used to find the best parameters to fit an expression to a dataset. If we use it to fit our velocity equation to this dataset and plot it on top, it looks like this
+Next it uses Mathematica's \texttt{FindFit} function to find the best values of $d_1$ and $d_2$ to fit our velocity equation to the dataset and plots the result on top. It's a pretty good fit!
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{angular_velocities_fitted}
+\includegraphics[width=\textwidth]{velocities_fitted_1}
 \end{figure}
 
-A pretty good fit! One last step and we're done.
+We now have an equation for the cart's velocity over time but it's not very useful. Firstly because it assumes a constant voltage and we're going to be changing the voltage to move the cart back and forth. Secondly, we're trying to find an equation to convert a force into voltage and this equation doesn't involve force at all.
 
-We have an equation for the cart's velocity over time but it's not very useful. Firstly because it assumes a constant voltage and we're going to be changing the voltage to move the cart back and forth. Secondly, remember, we're trying to find an equation to convert a force into voltage and this equation doesn't involve force at all!
-
-How can we fix this? Newton's second law tells us that $F = m a$. If we can find an equation for the acceleration of the cart based on the input voltage, we could rearrange Newton's second law to get the voltage in terms of the force which is what we're looking for!
+How can we fix this? Newton's second law tells us that $F = m a$. If we can find an equation for the acceleration of the cart based on the input voltage, we could rearrange Newton's second law to get the voltage in terms of the force which is what we're looking for.
 
 Let's take the derivative of our velocity equation with respect to time \[a = d_1 d_2 V_\text{in} e^{-d_2 t}.\] This looks promising, but it still assumes a constant voltage and what value would we use for $t$? Let's keep looking.
 
-Earlier we found a time-indepdendent equation for the angular velocity of the motor \[b_1 \ddot{\omega} + b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0.\] If we assume that the first term is small and can be ignored \[b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0,\] multiply by the radius of the timing pulley \[b_2 \dot{v} + b_3 v + R V_\text{in} = 0,\] rearrange, and collect constants we get an equation for the cart's acceleration that doesn't involve time \[\dot{v} = a = k_1 v + k_2 V_\text{in}.\]
+Earlier we found a time-indepdendent equation for the angular velocity of the motor \[b_1 \ddot{\omega} + b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0.\] If we assume that the first term is small and can be ignored \[b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0,\] multiply by the radius of the timing pulley \[b_2 a + b_3 v + R V_\text{in} = 0,\] rearrange, and collect constants we get an equation for the cart's acceleration that doesn't involve time \[a = k_1 v + k_2 V_\text{in}.\]
 
-We don't know the values of these constants $k_1$ and $k_2$ but we can find them if we equate this equation with our other one for the cart's acceleration. Doing that we finally get our time-independent equation for the cart's acceleration \[a = d_1 d_2 V_\text{in} - d_2 v.\]
+We don't know the values of these constants $k_1$ and $k_2$ but we can find them by equating this equation with the other one for the cart's acceleration \begin{align*}
+  d_1 d_2 V_\text{in} e^{-d_2 t} & = k_1 v + k_2 V_\text{in}                                \\
+                                 & = k_1 d_1 V_\text{in} (1 - e^{-d_2 t}) + k_2 V_\text{in} \\
+                                 & = (k_1 d_1 + k_2) V_\text{in} - k_1 d_1 e^{-d_2 t}
+\end{align*} so $k_1 = -d_2$ and $k_2 = d_1 d_2$. Finally we have a time-independent equation for the cart's acceleration \[a = d_1 d_2 V_\text{in} - d_2 v.\]
 
-Is this equation correct though? One way to check is to integrate it numerically and see if the result matches the data we collected. Back in the Mathematica notebook we do that, and can see it matches pretty well.
+Is this equation correct? One way to check is to integrate it numerically and see if the result matches the data we collected. The Mathematica notebook generates the following plot which looks pretty good.
 
-Finally we can multiply the cart's acceleration by its mass to find the applied force \[F = m_2 (d_1 d_2 V_\text{in} - d_2 v)\] and we can rearrange that equation to find the voltage required to apply that force \[V_\text{in} = \frac{1}{d_1} \left( v + \frac{F}{d_2 m_2} \right).\] So the control algorithm tells us what force to apply and this equation tells us what voltage to apply. We're ready to start coding!
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{velocities_fitted_2}
+\end{figure}
+
+Using Newton's second law we can multiply the cart's mass and acceleration to find the applied force \[F = m_2 (d_1 d_2 V_\text{in} - d_2 v)\] and we can rearrange to find the voltage required to apply that force \[V_\text{in} = \frac{1}{d_1} \left( v + \frac{F}{d_2 m_2} \right).\] So the control algorithm tells us what force to apply and this equation tells us what voltage to apply. We're ready to start coding!
 
 \section{Code}
 
-This is the code that runs the system. One of its most important jobs is to observe signals from the rotary encoders so we know the motor and pendulum angles. That's achieved with these two interrupt handlers. They're called when the signal from a rotary encoder changes, they calculate the angle change, and update the appropriate variable.
+\href{https://github.com/chrisdoble/self-balancing-inverted-pendulum/blob/master/sketch/sketch.ino}{Here} is the code that runs the system. One of its most important jobs is to observe signals from the rotary encoders so we know the motor and pendulum angles. That's achieved with two interrupt handlers. They're called when the signal from a rotary encoder changes, they calculate the angle change, and update the appropriate variable.
 
 The rest of the system is a big state machine. It moves through a series of initialisation states, starts running, and finally gets killed for one reason or another.
 
-On startup we don't know the position of the cart, so in the first state the cart moves to the right until it's pressing the limit switch. At that point we know where the cart is which lets us zero the cart position and motor angle.
+On startup we don't know the position of the cart, so in the first state the cart moves to the right until it's pressing the limit switch. At that point we know where the cart is which lets us zero the cart position and motor angle variables.
 
 Next, the cart moves to the middle of the track which is where we want it to be when it starts running.
 
-We also need to zero the pendulum angle. The pendulum might still be swinging from the cart's movement, so we wait until it's still, assume it's pointing down, and zero it. This does mean that down is considered zero instead of up, but that's fixed in the next state.
+We also need to zero the pendulum angle. The pendulum might still be swinging from the cart's movement, so we wait until it's still, assume it's pointing down due to gravity, and zero the pendulum angle variable. This does mean that down is considered zero instead of up, but that's fixed in the next state.
 
-The user rotates the pendulum until it's near upright, we offset the pendulum angle so up is consdered zero, and we start running.
+The user rotates the pendulum until it's near upright, we offset the pendulum angle variable so up is considered zero, and we start running.
 
 If the cart gets too close to either end of the track or the pendulum angle becomes too great, we assume we're not going to be able to recover, and kill the system. You can also kill it manually by pressing the limit switch.
 
@@ -321,10 +353,6 @@ The last significant part of the code is calculating the cart's velocity and the
 
 \section{Conclusion}
 
-And that's how I built my self-balancing pendulum!
-
-The 3D models, code, notes, and everything else are available on GitHub which I've linked in the description.
-
-I hope you enjoyed the video, please let me know if you have any feedback or questions. Thanks for watching!
+And that's how I built my self-balancing pendulum! The 3D models, code, notes, and everything else are available on GitHub \href{https://github.com/chrisdoble/self-balancing-inverted-pendulum}{here}. Please let me know if you have any feedback or questions.
 
 \end{document}
