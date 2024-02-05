@@ -1,0 +1,14 @@
+\documentclass[tikz]{standalone}
+
+\usepackage{amsmath}
+\usepackage{circuitikz}
+
+\begin{document}
+\begin{circuitikz}[american voltages]
+  \draw (0, 0) to [V, invert, l=$V_\text{in}$] (0, 2)
+  to [resistor, l=$R$] (3, 2)
+  to [inductor, l=$L$] (5, 2)
+  to [V, l=$V_\text{motor}$] (5, 0)
+  to (0, 0);
+\end{circuitikz}
+\end{document}

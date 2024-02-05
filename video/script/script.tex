@@ -232,7 +232,7 @@ Great! We have our control algorithm and we've built the physical system, but th
   \end{circuitikz}
 \end{figure}
 
-We can model the electrical properties of a DC motor using this simple circuit. $V_\text{in}$ is the voltage applied to the motor, $R$ is the resistance of its windings, $L$ is the inductance of its windings, and $V_\text{motor}$ is the back emf generated as the motor is spinning. Applying Kirchoff's voltage law to this circuit gives \[V_\text{in} - I R - \frac{d I}{d t} L - V_\text{motor} = 0.\] If we assume the back emf is proportional to the motor's angular velocity $\omega$ this becomes \[V_\text{in} - I R - \frac{d I}{d t} L - a_1 \omega = 0\] where $a_1$ is a proportionality constant.
+We can model the electrical properties of a DC motor using this simple circuit. $V_\text{in}$ is the voltage applied to the motor, $R$ is the resistance of its windings, $L$ is the inductance of its windings, and $V_\text{motor}$ is the back emf generated as the motor is spinning. Applying Kirchoff's voltage law to this circuit gives \[V_\text{in} - I R - \frac{d I}{d t} L - V_\text{motor} = 0.\] If we assume the back emf is proportional to the motor's angular velocity $\omega$ the final term becomes $a_1 \omega$ where $a_1$ is a proportionality constant \[V_\text{in} - I R - \frac{d I}{d t} L - a_1 \omega = 0.\]
 
 We can model the mechanical properties of a DC motor by treating it as a rotating cylinder. It experiences a torque from the motor $\tau_m$ and a resistive torque $\tau_r$ from back emf, friction, etc. This gives an equation of motion \[\tau_m - \tau_r = J \dot{\omega}\] where $J$ is the cylinder's moment of inertia. If we assume the torque from the motor is proportional to the current flowing through it this becomes \[a_2 I - \tau_r = J \dot{\omega}\] and if we further assume that the resistive torque is proportional to the cylinder's angular velocity this becomes \[a_2 I - a_3 \omega = J \dot{\omega}.\]
 
@@ -270,7 +270,7 @@ We don't know the values of these constants $k_1$ and $k_2$ but we can find them
 
 Is this equation correct though? One way to check is to integrate it numerically and see if the result matches the data we collected. Back in the Mathematica notebook we do that, and can see it matches pretty well.
 
-Finally we can multiply the cart's acceleration by its mass to find the applied force \[F = m_2 (d_1 d_2 V_\text{in} - d_2 v)\] and we can rearrange this equation to find the voltage required to apply that force \[V_\text{in} = \frac{1}{d_1} \left( v + \frac{F}{d_2 m_2} \right).\] So the control algorithm tells us what force to apply and this equation tells us what voltage to apply. We're ready to start coding!
+Finally we can multiply the cart's acceleration by its mass to find the applied force \[F = m_2 (d_1 d_2 V_\text{in} - d_2 v)\] and we can rearrange that equation to find the voltage required to apply that force \[V_\text{in} = \frac{1}{d_1} \left( v + \frac{F}{d_2 m_2} \right).\] So the control algorithm tells us what force to apply and this equation tells us what voltage to apply. We're ready to start coding!
 
 \section{Code}
 
