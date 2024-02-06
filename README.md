@@ -6,6 +6,18 @@ This repository contains 3D models, code, notes, etc. on my self-balancing inver
   </a>
 </p>
 
+# Table of Contents
+
+- [Introduction](#introduction)
+- [Equations of Motion](#equations-of-motion)
+- [Linearisation](#linearisation)
+- [Stability](#stability)
+- [Control](#control)
+- [Construction](#construction)
+- [Motor Control](#motor-control)
+- [Code](#code)
+- [Conclusion](#conclusion)
+
 # Introduction
 
 If you've ever tried to keep something like a broom or a stick upright on your hand you'll know it can be quite tricky! Gravity's constantly pulling it down, so if it's not perfectly vertical it'll start to fall. The same thing happens to the pendulum but it's connected to a cart which is programmed to move left and right in a way that keeps the pendulum upright.
@@ -26,44 +38,94 @@ With that out of the way, now we can calculate the Lagrangian of the system. The
 
 Starting with the cart, its kinetic energy is $$T_\text{cart} = \frac{1}{2} m_1 v^2$$ but because it can only move along the $x$-axis its velocity has no $y$ component and this is equivalent to $$T_\text{cart} = \frac{1}{2} m_1 \dot{x}^2$$ where $\dot{x}$ is the derivative of $x$ with respect to time, i.e. the cart's $x$ velocity. As for the cart's potential energy, it can't move up or down so its gravitational potential energy can't change and there's no springs or anything involved so we might as well set it to $$U_\text{cart} = 0.$$
 
-Next, the pendulum. Because it's joined to the cart its $x$ coordinate changes as the cart moves, and both of its coordinates change as it rotates. That being the case, its coordinates are $$\begin{aligned}
+Next, the pendulum. Because it's joined to the cart its $x$ coordinate changes as the cart moves, and both of its coordinates change as it rotates. That being the case, its coordinates are
+
+$$
+\begin{align*}
   X & = x - l \sin \theta \\
   Y & = l \cos \theta.
-\end{aligned}$$ Differentiating them with respect to time gives the $x$ and $y$ components of the pendulum's velocity $$\begin{aligned}
+\end{align*}
+$$
+
+Differentiating them with respect to time gives the $x$ and $y$ components of the pendulum's velocity
+
+$$
+\begin{align*}
   \dot{X} & = \dot{x} - l \dot{\theta} \cos \theta \\
   \dot{Y} & = -l \dot{\theta} \sin \theta.
-\end{aligned}$$ Using the Pythagorean theorem we can combine these to find the squared magnitude of its velocity $$\begin{aligned}
+\end{align*}
+$$
+
+Using the Pythagorean theorem we can combine these to find the squared magnitude of its velocity
+
+$$
+\begin{align*}
   V^2 & = \dot{X}^2 + \dot{Y}^2                                                      \\
       & = (\dot{x} - l \dot{\theta} \cos \theta)^2 + (-l \dot{\theta} \sin \theta)^2 \\
       & = \dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2
-\end{aligned}$$ and we can use this to find its kinetic energy $$\begin{aligned}
+\end{align*}
+$$
+
+and we can use this to find its kinetic energy
+
+$$
+\begin{align*}
   T_\text{pendulum} & = \frac{1}{2} m_2 V^2                                                                      \\
                     & = \frac{1}{2} m_2 (\dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2).
-\end{aligned}$$ Unlike the cart, the pendulum's potential energy can change — when it rotates it moves up and down so its gravitational potential energy changes. If we say its potential energy is $0$ when it's horizontal ($\theta = \pi / 2$), then we can define its potential energy to be $$\begin{aligned}
+\end{align*}
+$$
+
+Unlike the cart, the pendulum's potential energy can change — when it rotates it moves up and down so its gravitational potential energy changes. If we say its potential energy is $0$ when it's horizontal ($\theta = \pi / 2$), then we can define its potential energy to be
+
+$$
+\begin{align*}
   U_\text{pendulum} & = m_2 g y             \\
                     & = m_2 g l \cos \theta
-\end{aligned}$$ where $g$ is acceleration due to gravity.
+\end{align*}
+$$
 
-Combining all of those energies and rearranging gives us our Lagrangian $$\begin{aligned}
+where $g$ is acceleration due to gravity.
+
+Combining all of those energies and rearranging gives us our Lagrangian
+
+$$
+\begin{align*}
   \mathcal{L} & = T - U                                                                                                                                     \\
               & = T_\text{cart} + T_\text{pendulum} - U_\text{cart} - U_\text{pendulum}                                                                     \\
               & = \frac{1}{2} m_1 \dot{x}^2 + \frac{1}{2} m_2 (\dot{x}^2 - 2 l \dot{\theta} \dot{x} \cos \theta + l^2 \dot{\theta}^2) - m_2 g l \cos \theta \\
               & = \frac{1}{2} (m_1 + m_2) \dot{x}^2 + \frac{1}{2} m_2 (l^2 \dot{\theta}^2 - 2 l \dot{\theta} \dot{x} \cos \theta) - m_2 g l \cos \theta.
-\end{aligned}$$
+\end{align*}
+$$
 
-Now that we have it we can apply the Euler-Lagrange equation to each of the system's two coordinates $\theta$ and $x$. For $\theta$ we get $$\begin{aligned}
+Now that we have it we can apply the Euler-Lagrange equation to each of the system's two coordinates $\theta$ and $x$. For $\theta$ we get
+
+$$
+\begin{align*}
   0 & = \frac{\partial \mathcal{L}}{\partial \theta} - \frac{d}{d t} \frac{\partial \mathcal{L}}{\partial \dot{\theta}}                                            \\
     & = m_2 l \dot{\theta} \dot{x} \sin \theta + m_2 g l \sin \theta - \frac{d}{d t} (m_2 l^2 \dot{\theta} - m_2 l \dot{x} \cos \theta)                            \\
     & = m_2 l \dot{\theta} \dot{x} \sin \theta + m_2 g l \sin \theta - m_2 l^2 \ddot{\theta} + m_2 l \ddot{x} \cos \theta - m_2 l \dot{\theta} \dot{x} \sin \theta \\
     & = g \sin \theta - l \ddot{\theta} + \ddot{x} \cos \theta                                                                                                     \\
-\end{aligned}$$ and for $x$ we get $$\begin{aligned}
+\end{align*}
+$$
+
+and for $x$ we get
+
+$$
+\begin{align*}
   0 & = \frac{\partial \mathcal{L}}{\partial x} - \frac{d}{d t} \frac{\partial L}{\partial \dot{x}} \\
     & = -\frac{d}{d t} [(m_1 + m_2) \dot{x} - m_2 l \dot{\theta} \cos \theta]                       \\
     & = -(m_1 + m_2) \ddot{x} + m_2 l \ddot{\theta} \cos \theta - m_2 l \dot{\theta}^2 \sin \theta.
-\end{aligned}$$ Rearranging these two equations and solving for $\ddot{\theta}$ and $\ddot{x}$ gives us our equations of motion $$\begin{aligned}
+\end{align*}
+$$
+
+Rearranging these two equations and solving for $\ddot{\theta}$ and $\ddot{x}$ gives us our equations of motion
+
+$$
+\begin{align*}
   \ddot{\theta} & = \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
   \ddot{x}      & = \frac{m_2 g \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}.
-\end{aligned}$$
+\end{align*}
+$$
 
 Now that we have them how do we know they're correct? One way would be to solve them for $\theta$ and $x$ and see if their predictions are reasonable. I certainly don't know how to solve them analytically, but we can solve them numerically. [Here](notebooks/uncontrolled.nb) is a Mathematica notebook that does just that. First it defines some constants like gravity, the length of the pendulum, etc. followed by the initial conditions for the simulation. It solves the equations of motion numerically and generates a plot of the solutions. The following shows a pendulum being released from $30^{\circ}$.
 
@@ -89,19 +151,40 @@ Linearising a function means finding a linear approximation of it at a particula
 
 In the case of the pendulum, our goal is to keep the cart in the middle of the track, the pendulum upright, and neither the cart nor the pendulum moving. In other words, we want all four variables $\theta$, $\dot{\theta}$, $x$, and $\dot{x}$ to be $0$. The further they are from $0$ the less likely it is we'll be able to recover and we might have to accept that the pendulum's going to fall over or hit the end of the track. If they're always going to be near $0$ then it sounds like we can tolerate the approximation error and linearisation might work for us!
 
-So how do we linearise our equations of motion? First, let's combine them into one vector-valued function $$\begin{bmatrix}
+So how do we linearise our equations of motion? First, let's combine them into one vector-valued function
+
+$$
+\begin{bmatrix}
     \ddot{\theta} \\
     \ddot{x}
   \end{bmatrix} = \boldsymbol{\mathbf{f}}(\theta, \dot{\theta}) = \begin{bmatrix}
     \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
     \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
-\end{bmatrix}.$$ Let's also define the state vector $\boldsymbol{\mathbf{x}}$ to be a column matrix describing the state of the system $$\boldsymbol{\mathbf{x}} = \begin{bmatrix} \theta \\ \dot{\theta} \\ x \\ \dot{x} \end{bmatrix}.$$ With this definition we can change our function to accept the state vector $\boldsymbol{\mathbf{x}}$ $$\begin{bmatrix}
+\end{bmatrix}
+$$
+
+Let's also define the state vector $\boldsymbol{\mathbf{x}}$ to be a column matrix describing the state of the system
+
+$$
+\boldsymbol{\mathbf{x}} = \begin{bmatrix} \theta \\ \dot{\theta} \\ x \\ \dot{x} \end{bmatrix}
+$$
+
+With this definition we can change our function to accept the state vector $\boldsymbol{\mathbf{x}}$
+
+$$
+\begin{bmatrix}
     \ddot{\theta} \\
     \ddot{x}
   \end{bmatrix} = \boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}}) = \begin{bmatrix}
     \frac{(m_1 + m_2) g \sin \theta - m_2 l \dot{\theta}^2 \cos \theta \sin \theta}{l (m_1 + m_2) - m_2 l \cos^2 \theta} \\
     \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
-  \end{bmatrix}.$$ If we include $\dot{\theta}$ and $\dot{x}$ in the output you can see that the function now returns the derivative of $\boldsymbol{\mathbf{x}}$ $$\begin{aligned}
+  \end{bmatrix}
+$$
+
+If we include $\dot{\theta}$ and $\dot{x}$ in the output you can see that the function now returns the derivative of $\boldsymbol{\mathbf{x}}$
+
+$$
+\begin{align*}
   \begin{bmatrix}
     \dot{\theta}  \\
     \ddot{\theta} \\
@@ -119,11 +202,30 @@ So how do we linearise our equations of motion? First, let's combine them into o
                                             \dot{x}                                                                                                              \\
                                             \frac{m_2 \sin 2 \theta - 2 m_2 l \dot{\theta}^2 \sin \theta}{2 m_1 + m_2 - m_2 \cos 2 \theta}
                                           \end{bmatrix}.
-\end{aligned}$$
+\end{align*}
+$$
 
-The general equation to linearise a vector-valued function like this at a particular point $\boldsymbol{\mathbf{p}}$ is $$\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}}) \approx f(\boldsymbol{\mathbf{p}}) + D \boldsymbol{\mathbf{f}}|_{\boldsymbol{\mathbf{p}}} (\boldsymbol{\mathbf{x}} - \boldsymbol{\mathbf{p}}).$$ As mentioned before we want to linearise our function at the point where all the elements of $\boldsymbol{\mathbf{x}}$ are $0$. That means $\boldsymbol{\mathbf{p}}$ is the zero vector and the equation becomes $$\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}}) \approx f(\boldsymbol{\mathbf{0}}) + D \boldsymbol{\mathbf{f}}|_{\boldsymbol{\mathbf{0}}} (\boldsymbol{\mathbf{x}} - \boldsymbol{\mathbf{0}}).$$ Looking at the elements within $\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}})$ you can see that at this point $\dot{\theta} = 0$ so the first element is $0$. $\sin \theta = 0$ so the second element is $0$. $\dot{x} = 0$ so the third element is $0$. Finally, $\sin \theta = 0$ and $\sin 2 \theta = 0$ so the fourth element is $0$. So $\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}})$ evaluated at the point $\boldsymbol{\mathbf{p}} = \boldsymbol{\mathbf{0}}$ is also the zero vector and we can remove it from our linearised function $$\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}}) \approx D \boldsymbol{\mathbf{f}}|_{\boldsymbol{\mathbf{0}}} \boldsymbol{\mathbf{x}}.$$
+The general equation to linearise a vector-valued function like this at a particular point $\boldsymbol{\mathbf{p}}$ is
 
-The remaining term is the Jacobian matrix of our function evaluated at the point $\boldsymbol{\mathbf{p}} = \boldsymbol{\mathbf{0}}$. It plays the same role the derivative did in the previous two-dimensional example — when you multiply it by a displacement vector $\boldsymbol{\mathbf{x}}$ it tells you how much each component of the function differs from the point at which it was linearised. It's like extending the slope in each dimension. If we actually evaluate it we get a matrix that we'll call $\boldsymbol{\mathbf{A}}$ and the final linearised version of our function is $$\dot{\boldsymbol{\mathbf{x}}} = \boldsymbol{\mathbf{A}} \boldsymbol{\mathbf{x}} = \begin{bmatrix}
+$$
+\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}}) \approx f(\boldsymbol{\mathbf{p}}) + D \boldsymbol{\mathbf{f}}|_{\boldsymbol{\mathbf{p}}} (\boldsymbol{\mathbf{x}} - \boldsymbol{\mathbf{p}}).
+$$
+
+As mentioned before we want to linearise our function at the point where all the elements of $\boldsymbol{\mathbf{x}}$ are $0$. That means $\boldsymbol{\mathbf{p}}$ is the zero vector and the equation becomes
+
+$$
+\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}}) \approx f(\boldsymbol{\mathbf{0}}) + D \boldsymbol{\mathbf{f}}|_{\boldsymbol{\mathbf{0}}} (\boldsymbol{\mathbf{x}} - \boldsymbol{\mathbf{0}}).
+$$
+
+Looking at the elements within $\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}})$ you can see that at this point $\dot{\theta} = 0$ so the first element is $0$. $\sin \theta = 0$ so the second element is $0$. $\dot{x} = 0$ so the third element is $0$. Finally, $\sin \theta = 0$ and $\sin 2 \theta = 0$ so the fourth element is $0$. So $\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}})$ evaluated at the point $\boldsymbol{\mathbf{p}} = \boldsymbol{\mathbf{0}}$ is also the zero vector and we can remove it from our linearised function
+
+$$
+\boldsymbol{\mathbf{f}}(\boldsymbol{\mathbf{x}}) \approx D \boldsymbol{\mathbf{f}}|_{\boldsymbol{\mathbf{0}}} \boldsymbol{\mathbf{x}}.$$
+
+The remaining term is the Jacobian matrix of our function evaluated at the point $\boldsymbol{\mathbf{p}} = \boldsymbol{\mathbf{0}}$. It plays the same role the derivative did in the previous two-dimensional example — when you multiply it by a displacement vector $\boldsymbol{\mathbf{x}}$ it tells you how much each component of the function differs from the point at which it was linearised. It's like extending the slope in each dimension. If we actually evaluate it we get a matrix that we'll call $\boldsymbol{\mathbf{A}}$ and the final linearised version of our function is
+
+$$
+\dot{\boldsymbol{\mathbf{x}}} = \boldsymbol{\mathbf{A}} \boldsymbol{\mathbf{x}} = \begin{bmatrix}
     0                           & 1 & 0 & 0 \\
     \frac{g (m_1 + m_2)}{l m_1} & 0 & 0 & 0 \\
     0                           & 0 & 0 & 1 \\
@@ -138,13 +240,28 @@ Now that we have a linearised version of our equations of motion we can apply so
 
 # Control
 
-I mentioned earlier that the cart moves left and right to keep the pendulum upright. A more formal of saying that is: we can say we apply a force $F$ on the cart in the $x$ direction. We can recalculate our equations of motion to include this force, the only difference is we apply d'Alembert's principle to the Euler-Lagrange equation for the $x$ coordinate and equate it to $F$. This results in the following updated equations of motion where I've hidden some terms so we can focus on the coefficients of $F$ $$\begin{aligned}
+I mentioned earlier that the cart moves left and right to keep the pendulum upright. A more formal of saying that is: we can say we apply a force $F$ on the cart in the $x$ direction. We can recalculate our equations of motion to include this force, the only difference is we apply d'Alembert's principle to the Euler-Lagrange equation for the $x$ coordinate and equate it to $F$. This results in the following updated equations of motion where I've hidden some terms so we can focus on the coefficients of $F$
+
+$$
+\begin{align*}
   \ddot{\theta} & = f(\theta, \dot{\theta}) + \frac{\cos \theta}{l (m_1 + m_2) - l m_2 \cos^2 \theta} F \\
   \ddot{x}      & = g(\theta, \dot{\theta}) + \frac{2}{2 m_1 + m_2 - m_2 \cos 2 \theta} F.
-\end{aligned}$$ Again, our goal is for $\theta$ to be close to $0$ so we can use the small angle approximation where $\cos \theta \approx 1$. That simplifies these equations to $$\begin{aligned}
+\end{align*}
+$$
+
+Again, our goal is for $\theta$ to be close to $0$ so we can use the small angle approximation where $\cos \theta \approx 1$. That simplifies these equations to
+
+$$
+\begin{align*}
   \ddot{\theta} & = f(\theta, \dot{\theta}) + \frac{1}{l m_1} F \\
   \ddot{x}      & = g(\theta, \dot{\theta}) + \frac{1}{m_1} F.
-\end{aligned}$$ If we use the coefficients of $F$ to create a new matrix $\boldsymbol{\mathbf{B}}$ and substitute this into our linearised equations of motion we get $$\begin{aligned}
+\end{align*}
+$$
+
+If we use the coefficients of $F$ to create a new matrix $\boldsymbol{\mathbf{B}}$ and substitute this into our linearised equations of motion we get
+
+$$
+\begin{align*}
 \dot{\boldsymbol{\mathbf{x}}} &= \boldsymbol{\mathbf{A}} \boldsymbol{\mathbf{x}} + \boldsymbol{\mathbf{B}} F \\
 &= \begin{bmatrix}
     0                           & 1 & 0 & 0 \\
@@ -157,21 +274,34 @@ I mentioned earlier that the cart moves left and right to keep the pendulum upri
     0               \\
     \frac{1}{m_1}
 \end{bmatrix} F.
-\end{aligned}$$
+\end{align*}
+$$
 
-Another useful tool from control theory is the concept of controllability. A system is said to be controllable if it's possible to move it into any state you want using only its inputs. In our case, the only input is $F$ — is that enough to control the system? It is if the rank of the controllability matrix equals the dimension of the state space $$\begin{aligned}
+Another useful tool from control theory is the concept of controllability. A system is said to be controllable if it's possible to move it into any state you want using only its inputs. In our case, the only input is $F$ — is that enough to control the system? It is if the rank of the controllability matrix equals the dimension of the state space
+
+$$
+\begin{align*}
 \mathop{\mathrm{rank}}(\boldsymbol{\mathbf{C}}) &= \mathop{\mathrm{rank}}(\begin{bmatrix}
 \boldsymbol{\mathbf{B}} & \boldsymbol{\mathbf{A}} \boldsymbol{\mathbf{B}} & \boldsymbol{\mathbf{A}}^2 \boldsymbol{\mathbf{B}} & \cdots & \boldsymbol{\mathbf{A}}^{n - 1} \boldsymbol{\mathbf{B}}
 \end{bmatrix}) \\
 &= n.
-\end{aligned}$$ If we perform this calculation using our $\boldsymbol{\mathbf{A}}$ and $\boldsymbol{\mathbf{B}}$ matrices we get the value $4$. This is the dimension of our state vector which means we are able to control the system using only the force $F$.
+\end{align*}
+$$
+
+If we perform this calculation using our $\boldsymbol{\mathbf{A}}$ and $\boldsymbol{\mathbf{B}}$ matrices we get the value $4$. This is the dimension of our state vector which means we are able to control the system using only the force $F$.
 
 Now we have a way to control the system, but how do we choose $F$? We want it to be a function of the state of the system — for example, if the pendulum is close to vertical we want to apply a small force but if it's far from vertical we want to apply a larger force. This suggests we could define it as a row matrix $\boldsymbol{\mathbf{K}}$ times the state vector $\boldsymbol{\mathbf{x}}$ $$F = \boldsymbol{\mathbf{K}} \boldsymbol{\mathbf{x}}.$$ Conventionally this is written with a minus sign $$F = -\boldsymbol{\mathbf{K}} \boldsymbol{\mathbf{x}}.$$
 
-If we substitute this into our linearised equation of motion we get $$\begin{aligned}
+If we substitute this into our linearised equation of motion we get
+
+$$
+\begin{align*}
   \dot{\boldsymbol{\mathbf{x}}} & = \boldsymbol{\mathbf{A}} \boldsymbol{\mathbf{x}} - \boldsymbol{\mathbf{B}} \boldsymbol{\mathbf{K}} \boldsymbol{\mathbf{x}} \\
            & = (\boldsymbol{\mathbf{A}} - \boldsymbol{\mathbf{B}} \boldsymbol{\mathbf{K}}) \boldsymbol{\mathbf{x}}.
-\end{aligned}$$ This looks very similar to the original equation except $\boldsymbol{\mathbf{A}}$ has been replaced by $\boldsymbol{\mathbf{A}} - \boldsymbol{\mathbf{B}} \boldsymbol{\mathbf{K}}$. If we can choose $\boldsymbol{\mathbf{K}}$ in such a way that the eigenvalues of $\boldsymbol{\mathbf{A}} - \boldsymbol{\mathbf{B}} \boldsymbol{\mathbf{K}}$ don't have positive real components, the system will be stable.
+\end{align*}
+$$
+
+This looks very similar to the original equation except $\boldsymbol{\mathbf{A}}$ has been replaced by $\boldsymbol{\mathbf{A}} - \boldsymbol{\mathbf{B}} \boldsymbol{\mathbf{K}}$. If we can choose $\boldsymbol{\mathbf{K}}$ in such a way that the eigenvalues of $\boldsymbol{\mathbf{A}} - \boldsymbol{\mathbf{B}} \boldsymbol{\mathbf{K}}$ don't have positive real components, the system will be stable.
 
 So how do we choose $\boldsymbol{\mathbf{K}}$? One approach is to use the Linear Quadratic Regulator algorithm. I don't completely understand how this works, but thankfully there's a Mathematica function that does. It accepts our $\boldsymbol{\mathbf{A}}$ and $\boldsymbol{\mathbf{B}}$ matrices plus two additional matrices that define how much it "costs" to apply a force to the cart and for each variable to differ from $0$. For example, if we don't want to use much electricity running the motor we could set the force cost high and the resulting $\boldsymbol{\mathbf{K}}$ matrix would try to minimise its use. Or if we don't want the cart to move far from the centre of the track we could set the $x$ cost high and the matrix would try to keep it near $0$, possibly at the expense of another variable like the pendulum angle.
 
@@ -256,11 +386,17 @@ Let's take the derivative of our velocity equation with respect to time $$a = d_
 
 Earlier we found a time-indepdendent equation for the angular velocity of the motor $$b_1 \ddot{\omega} + b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0.$$ If we assume that the first term is small and can be ignored $$b_2 \dot{\omega} + b_3 \omega + V_\text{in} = 0,$$ multiply by the radius of the timing pulley $$b_2 a + b_3 v + R V_\text{in} = 0,$$ rearrange, and collect constants we get an equation for the cart's acceleration that doesn't involve time $$a = k_1 v + k_2 V_\text{in}.$$
 
-We don't know the values of these constants $k_1$ and $k_2$ but we can find them by equating this equation with the other one for the cart's acceleration $$\begin{aligned}
+We don't know the values of these constants $k_1$ and $k_2$ but we can find them by equating this equation with the other one for the cart's acceleration
+
+$$
+\begin{align*}
   d_1 d_2 V_\text{in} e^{-d_2 t} & = k_1 v + k_2 V_\text{in}                                \\
                                  & = k_1 d_1 V_\text{in} (1 - e^{-d_2 t}) + k_2 V_\text{in} \\
                                  & = (k_1 d_1 + k_2) V_\text{in} - k_1 d_1 e^{-d_2 t}
-\end{aligned}$$ so $k_1 = -d_2$ and $k_2 = d_1 d_2$. Finally we have a time-independent equation for the cart's acceleration $$a = d_1 d_2 V_\text{in} - d_2 v.$$
+\end{align*}
+$$
+
+so $k_1 = -d_2$ and $k_2 = d_1 d_2$. Finally we have a time-independent equation for the cart's acceleration $$a = d_1 d_2 V_\text{in} - d_2 v.$$
 
 Is this equation correct? One way to check is to integrate it numerically and see if the result matches the data we collected. The Mathematica notebook generates the following plot which looks pretty good.
 
