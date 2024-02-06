@@ -127,7 +127,7 @@ $$
 \end{align*}
 $$
 
-Now that we have them how do we know they're correct? One way would be to solve them for $\theta$ and $x$ and see if their predictions are reasonable. I certainly don't know how to solve them analytically, but we can solve them numerically. [Here](notebooks/uncontrolled.nb) is a Mathematica notebook that does just that. First it defines some constants like gravity, the length of the pendulum, etc. followed by the initial conditions for the simulation. It solves the equations of motion numerically and generates a plot of the solutions. The following shows a pendulum being released from $30^{\circ}$.
+Now that we have them how do we know they're correct? One way would be to solve them for $\theta$ and $x$ and see if their predictions are reasonable. I certainly don't know how to solve them analytically, but we can solve them numerically. [Here](https://github.com/chrisdoble/self-balancing-inverted-pendulum/blob/master/notebooks/uncontrolled.nb) is a Mathematica notebook that does just that. First it defines some constants like gravity, the length of the pendulum, etc. followed by the initial conditions for the simulation. It solves the equations of motion numerically and generates a plot of the solutions. The following shows a pendulum being released from $30^{\circ}$.
 
 <p align="center">
   <img src="post/images/uncontrolled.png" width="500"/>
@@ -305,7 +305,7 @@ This looks very similar to the original equation except $\boldsymbol{\mathbf{A}}
 
 So how do we choose $\boldsymbol{\mathbf{K}}$? One approach is to use the Linear Quadratic Regulator algorithm. I don't completely understand how this works, but thankfully there's a Mathematica function that does. It accepts our $\boldsymbol{\mathbf{A}}$ and $\boldsymbol{\mathbf{B}}$ matrices plus two additional matrices that define how much it "costs" to apply a force to the cart and for each variable to differ from $0$. For example, if we don't want to use much electricity running the motor we could set the force cost high and the resulting $\boldsymbol{\mathbf{K}}$ matrix would try to minimise its use. Or if we don't want the cart to move far from the centre of the track we could set the $x$ cost high and the matrix would try to keep it near $0$, possibly at the expense of another variable like the pendulum angle.
 
-[Here](notebooks/controlled.nb) is a Mathematica notebook that calculates the $\boldsymbol{\mathbf{K}}$ matrix and generates a plot of a pendulum controlled by it. The following shows a pendulum being released from $30^{\circ}$ with all costs set to $1$.
+[Here](https://github.com/chrisdoble/self-balancing-inverted-pendulum/blob/master/notebooks/controlled.nb) is a Mathematica notebook that calculates the $\boldsymbol{\mathbf{K}}$ matrix and generates a plot of a pendulum controlled by it. The following shows a pendulum being released from $30^{\circ}$ with all costs set to $1$.
 
 <p align="center">
   <img src="post/images/controlled.png" width="500"/>
@@ -366,7 +366,7 @@ Taking a step back, what does this equation represent? It tells us how the motor
 
 This is the general equation for the cart's velocity over time at particular input voltage. In order to use it for our pendulum we need to find the values of the constants $d_1$ and $d_2$ for our motor. We can do this by collecting data on the motor's behaviour at different voltages and fitting our model to that data.
 
-[Here](notebooks/motor.nb) is a Mathematica notebook that does just that. First it plots cart's velocity over time for 14 different voltages, some forwards, some backwards. Other than a blip at around $0.45\,\text{s}$ it looks as we would expect.
+[Here](https://github.com/chrisdoble/self-balancing-inverted-pendulum/blob/master/notebooks/motor.nb) is a Mathematica notebook that does just that. First it plots cart's velocity over time for 14 different voltages, some forwards, some backwards. Other than a blip at around $0.45\,\text{s}$ it looks as we would expect.
 
 <p align="center">
   <img src="post/images/velocities.png" width="500"/>
